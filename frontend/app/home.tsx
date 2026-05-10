@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
   Image,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -15,6 +17,7 @@ import { COLORS, SPACING, RADIUS, SHADOW } from '../lib/theme';
 export default function HomeScreen() {
   const router = useRouter();
   const { profile, signOut, setOnboardingDone } = useAuth();
+  const [searchQ, setSearchQ] = useState('');
 
   const onLogout = async () => {
     await signOut();
@@ -24,6 +27,16 @@ export default function HomeScreen() {
   const seeOnboarding = async () => {
     await setOnboardingDone(false);
     router.push('/onboarding');
+  };
+
+  const cercaGioie = () => {
+    Keyboard.dismiss();
+    const q = searchQ.trim();
+    if (q) {
+      router.push({ pathname: '/mappa', params: { q } });
+    } else {
+      router.push('/mappa');
+    }
   };
 
   return (
@@ -64,6 +77,30 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.actionsContainer}>
+          {/* Quick search bar -> apre la Mappa con il filtro applicato */}
+          <View style={styles.searchWrap}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              testID="home-search-input"
+              style={styles.searchInput}
+              placeholder="Cerca una gioia (es. libri, giochi…)"
+              placeholderTextColor={COLORS.textMedium}
+              value={searchQ}
+              onChangeText={setSearchQ}
+              onSubmitEditing={cercaGioie}
+              returnKeyType="search"
+              autoCorrect={false}
+              autoCapitalize="none"
+            />
+            <TouchableOpacity
+              testID="home-search-go"
+              onPress={cercaGioie}
+              style={styles.searchGoBtn}
+            >
+              <Text style={styles.searchGoText}>Cerca</Text>
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity
             testID="home-dona-btn"
             style={[styles.bigCard, { backgroundColor: COLORS.primary }]}
@@ -102,7 +139,7 @@ export default function HomeScreen() {
         <View style={styles.bottom}>
           <Text style={styles.tagline}>Il segreto di vivere felici, è DONARE.</Text>
           <TouchableOpacity testID="home-onboarding-btn" onPress={seeOnboarding}>
-            <Text style={styles.linkText}>Scopri lo scopo dell'app</Text>
+            <Text style={styles.linkText}>Scopri lo scopo dell&apos;app</Text>
           </TouchableOpacity>
           <TouchableOpacity testID="home-logout-btn" onPress={onLogout} style={{ marginTop: SPACING.m }}>
             <Text style={styles.logoutText}>Esci</Text>
@@ -146,6 +183,34 @@ const styles = StyleSheet.create({
   welcomeLine3: { fontSize: 14, color: COLORS.textMedium, textAlign: 'center' },
   welcomeLine4: { fontSize: 24, fontWeight: '900', color: COLORS.primary, lineHeight: 28 },
   actionsContainer: { marginTop: SPACING.m },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.medium,
+    borderWidth: 1.5,
+    borderColor: COLORS.inputBorder,
+    paddingHorizontal: 12,
+    minHeight: 48,
+    marginBottom: SPACING.m,
+    ...SHADOW,
+  },
+  searchIcon: { fontSize: 16, marginRight: 6 },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: COLORS.textDark,
+    paddingVertical: 10,
+  },
+  searchGoBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: RADIUS.medium,
+    minHeight: 36,
+    justifyContent: 'center',
+  },
+  searchGoText: { color: COLORS.white, fontWeight: '700', fontSize: 13 },
   bigCard: {
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.large,

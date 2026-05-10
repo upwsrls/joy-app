@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,20 +11,34 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
 import { api, Dono } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../lib/theme';
 import NativeMap from '../components/NativeMap';
+import FiltersBar from '../components/FiltersBar';
+import { applyFilters, EMPTY_FILTERS, Filters, distanceKm } from '../lib/filters';
+
+type ViewMode = 'mappa' | 'lista';
 
 export default function MappaScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const params = useLocalSearchParams<{ q?: string }>();
+
   const [doni, setDoni] = useState<Dono[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [posizione, setPosizione] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  const [filters, setFilters] = useState<Filters>(() => ({
+    ...EMPTY_FILTERS,
+    q: typeof params?.q === 'string' ? params.q : '',
+  }));
+
+  // Web defaults to "lista" because there is no native map; mobile defaults to "mappa".
+  const [viewMode, setViewMode] = useState<ViewMode>(Platform.OS === 'web' ? 'lista' : 'mappa');
 
   const carica = useCallback(async () => {
     try {
@@ -64,22 +78,14 @@ export default function MappaScreen() {
     carica();
   };
 
-  const distanzaKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return (R * c).toFixed(1);
-  };
-
   const apriDono = (dono: Dono) => {
     router.push(`/dono/${dono.id}`);
   };
+
+  const filteredDoni = useMemo(
+    () => applyFilters(doni, posizione, filters),
+    [doni, posizione, filters]
+  );
 
   if (loading) {
     return (
@@ -90,14 +96,76 @@ export default function MappaScreen() {
     );
   }
 
-  const altrui = doni.filter((d) => d.user_id !== user?.id);
-  const mieiCount = doni.length - altrui.length;
+  const altrui = filteredDoni.filter((d) => d.user_id !== user?.id);
+  const mieiCount = filteredDoni.length - altrui.length;
+  const totalCount = doni.length;
 
   const initialRegion = posizione
     ? { latitude: posizione.latitude, longitude: posizione.longitude, latitudeDelta: 0.5, longitudeDelta: 0.5 }
+    : filteredDoni.length > 0
+    ? { latitude: filteredDoni[0].lat, longitude: filteredDoni[0].lng, latitudeDelta: 1, longitudeDelta: 1 }
     : doni.length > 0
     ? { latitude: doni[0].lat, longitude: doni[0].lng, latitudeDelta: 1, longitudeDelta: 1 }
     : { latitude: 41.9028, longitude: 12.4964, latitudeDelta: 5, longitudeDelta: 5 };
+
+  const renderLista = () => (
+    <ScrollView
+      testID="lista-doni"
+      style={styles.list}
+      contentContainerStyle={{ padding: SPACING.l, paddingTop: SPACING.s }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
+      {filteredDoni.length === 0 ? (
+        <View style={styles.emptyWrap}>
+          <Text style={styles.emptyEmoji}>🌱</Text>
+          <Text style={styles.empty}>
+            {totalCount === 0
+              ? 'Nessuna gioia ancora 💙'
+              : 'Nessuna gioia con questi filtri'}
+          </Text>
+          {totalCount > 0 && (
+            <Text style={styles.emptyHint}>Prova a cambiare ricerca, categoria o distanza.</Text>
+          )}
+        </View>
+      ) : (
+        filteredDoni.map((d) => {
+          const isMine = d.user_id === user?.id;
+          const dist =
+            posizione && d.lat && d.lng
+              ? distanceKm(posizione.latitude, posizione.longitude, d.lat, d.lng)
+              : null;
+          return (
+            <TouchableOpacity
+              key={d.id}
+              testID={`dono-card-${d.id}`}
+              style={[styles.donoCard, isMine && { borderColor: COLORS.error }]}
+              onPress={() => apriDono(d)}
+            >
+              {d.foto_urls?.[0] ? (
+                <Image source={{ uri: d.foto_urls[0] }} style={styles.donoImg} />
+              ) : (
+                <View style={[styles.donoImg, { backgroundColor: COLORS.lightGray }]} />
+              )}
+              <View style={{ flex: 1, padding: SPACING.m }}>
+                <Text style={styles.donoTitle}>{d.titolo}</Text>
+                <Text style={styles.donoCategoria}>{d.categoria}</Text>
+                {!!d.donatore_nome && (
+                  <Text style={styles.donoDonatore}>
+                    {isMine
+                      ? '🔴 La tua gioia'
+                      : `🙂 ${d.donatore_nome}${d.donatore_citta ? ` · ${d.donatore_citta}` : ''}`}
+                  </Text>
+                )}
+                {dist !== null && (
+                  <Text style={styles.donoDist}>📍 ~{dist.toFixed(1)} km</Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })
+      )}
+    </ScrollView>
+  );
 
   return (
     <SafeAreaView style={styles.safe} testID="mappa-screen">
@@ -108,55 +176,48 @@ export default function MappaScreen() {
         <Text style={styles.title}>Cerca le gioie vicino a te 🔍</Text>
         <Text style={styles.subtitle}>
           {altrui.length > 0
-            ? `Trovate ${altrui.length} gioie disponibili!`
-            : 'Nessuna gioia disponibile al momento'}
-          {mieiCount > 0 ? ` (e ${mieiCount} tue gioie)` : ''}
+            ? `Trovate ${altrui.length} gioie disponibili`
+            : 'Nessuna gioia con questi filtri'}
+          {mieiCount > 0 ? ` (e ${mieiCount} tue)` : ''}
         </Text>
       </View>
 
-      {Platform.OS === 'web' ? (
-        <ScrollView
-          style={styles.list}
-          contentContainerStyle={{ padding: SPACING.l }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        >
-          {doni.length === 0 ? (
-            <Text style={styles.empty}>Nessuna gioia ancora 💙</Text>
-          ) : (
-            doni.map((d) => {
-              const isMine = d.user_id === user?.id;
-              const dist =
-                posizione && d.lat && d.lng ? distanzaKm(posizione.latitude, posizione.longitude, d.lat, d.lng) : null;
-              return (
-                <TouchableOpacity
-                  key={d.id}
-                  testID={`dono-card-${d.id}`}
-                  style={[styles.donoCard, isMine && { borderColor: COLORS.error }]}
-                  onPress={() => apriDono(d)}
-                >
-                  {d.foto_urls?.[0] ? (
-                    <Image source={{ uri: d.foto_urls[0] }} style={styles.donoImg} />
-                  ) : (
-                    <View style={[styles.donoImg, { backgroundColor: COLORS.lightGray }]} />
-                  )}
-                  <View style={{ flex: 1, padding: SPACING.m }}>
-                    <Text style={styles.donoTitle}>{d.titolo}</Text>
-                    <Text style={styles.donoCategoria}>{d.categoria}</Text>
-                    {!!d.donatore_nome && (
-                      <Text style={styles.donoDonatore}>
-                        {isMine ? '🔴 La tua gioia' : `🙂 ${d.donatore_nome}${d.donatore_citta ? ` · ${d.donatore_citta}` : ''}`}
-                      </Text>
-                    )}
-                    {dist && <Text style={styles.donoDist}>📍 ~{dist} km</Text>}
-                  </View>
-                </TouchableOpacity>
-              );
-            })
-          )}
-        </ScrollView>
+      <FiltersBar
+        filters={filters}
+        onChange={setFilters}
+        onClear={() => setFilters(EMPTY_FILTERS)}
+        hasUserPos={!!posizione}
+      />
+
+      {/* Mappa/Lista toggle (solo su mobile, su web la lista è l'unico modo) */}
+      {Platform.OS !== 'web' && (
+        <View style={styles.toggleRow}>
+          <TouchableOpacity
+            testID="toggle-mappa"
+            style={[styles.toggleBtn, viewMode === 'mappa' && styles.toggleActive]}
+            onPress={() => setViewMode('mappa')}
+          >
+            <Text style={[styles.toggleText, viewMode === 'mappa' && styles.toggleTextActive]}>
+              🗺️ Mappa
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="toggle-lista"
+            style={[styles.toggleBtn, viewMode === 'lista' && styles.toggleActive]}
+            onPress={() => setViewMode('lista')}
+          >
+            <Text style={[styles.toggleText, viewMode === 'lista' && styles.toggleTextActive]}>
+              📋 Lista
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {Platform.OS === 'web' || viewMode === 'lista' ? (
+        renderLista()
       ) : (
         <NativeMap
-          doni={doni}
+          doni={filteredDoni}
           myUserId={user?.id}
           initialRegion={initialRegion}
           onMarkerPress={apriDono}
@@ -170,12 +231,38 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background },
   loading: { marginTop: SPACING.s, color: COLORS.textMedium },
-  header: { padding: SPACING.l, paddingBottom: SPACING.s },
+  header: { paddingHorizontal: SPACING.l, paddingTop: SPACING.l, paddingBottom: SPACING.s },
   backText: { color: COLORS.primary, fontWeight: '700', fontSize: 16, marginBottom: SPACING.s },
   title: { fontSize: 22, fontWeight: '900', color: COLORS.textDark },
   subtitle: { fontSize: 13, color: COLORS.textMedium, marginTop: 4 },
+  toggleRow: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.l,
+    marginBottom: SPACING.s,
+    gap: 8,
+  },
+  toggleBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: RADIUS.medium,
+    borderWidth: 1.5,
+    borderColor: COLORS.inputBorder,
+    backgroundColor: COLORS.white,
+    alignItems: 'center',
+    minHeight: 40,
+    justifyContent: 'center',
+  },
+  toggleActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  toggleText: { color: COLORS.textDark, fontWeight: '700', fontSize: 14 },
+  toggleTextActive: { color: COLORS.white },
   list: { flex: 1 },
-  empty: { textAlign: 'center', color: COLORS.textMedium, marginTop: SPACING.xl, fontSize: 16 },
+  empty: { textAlign: 'center', color: COLORS.textDark, marginTop: SPACING.s, fontSize: 16, fontWeight: '600' },
+  emptyWrap: { alignItems: 'center', marginTop: SPACING.xl },
+  emptyEmoji: { fontSize: 48, marginBottom: SPACING.s },
+  emptyHint: { textAlign: 'center', color: COLORS.textMedium, marginTop: 4, fontSize: 13 },
   donoCard: {
     flexDirection: 'row',
     backgroundColor: COLORS.white,
