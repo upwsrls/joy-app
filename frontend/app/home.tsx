@@ -31,8 +31,8 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
           <View style={styles.avatar}>
-            {profile?.foto_base64 ? (
-              <Image source={{ uri: profile.foto_base64 }} style={styles.avatarImg} />
+            {profile?.foto_url ? (
+              <Image source={{ uri: profile.foto_url }} style={styles.avatarImg} />
             ) : (
               <Text style={styles.avatarPlaceholder}>🙂</Text>
             )}

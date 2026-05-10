@@ -33,6 +33,7 @@ export default function DonaScreen() {
 
   // Form state — preserved across modal openings
   const [foto, setFoto] = useState<string[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [titolo, setTitolo] = useState('');
   const [descrizione, setDescrizione] = useState('');
   const [categoria, setCategoria] = useState<string>('');
@@ -102,7 +103,16 @@ export default function DonaScreen() {
       base64: true,
     });
     if (!res.canceled && res.assets[0]?.base64) {
-      setFoto((prev) => [...prev, `data:image/jpeg;base64,${res.assets[0].base64}`].slice(0, 3));
+      try {
+        setUploadingPhoto(true);
+        const dataUrl = `data:image/jpeg;base64,${res.assets[0].base64}`;
+        const up = await api.post('/uploads/image', { base64: dataUrl });
+        setFoto((prev) => [...prev, up.data.secure_url].slice(0, 3));
+      } catch {
+        Alert.alert('Errore', 'Upload foto fallito. Riprova.');
+      } finally {
+        setUploadingPhoto(false);
+      }
     }
   };
 
@@ -159,7 +169,7 @@ export default function DonaScreen() {
         categoria,
         lat: posizione.latitude,
         lng: posizione.longitude,
-        foto_base64_list: foto,
+        foto_urls: foto,
       });
       Alert.alert('Grazie! 🌟', 'Una nuova gioia è pronta a volare verso qualcuno.');
       router.replace('/home');
@@ -186,8 +196,12 @@ export default function DonaScreen() {
               <Text style={styles.sectionTitle}>Foto colorate 📸</Text>
               <Text style={styles.sectionHint}>Max 3 immagini</Text>
             </View>
-            <TouchableOpacity testID="dona-add-photo" style={styles.secondaryButton} onPress={aggiungiFoto}>
-              <Text style={styles.secondaryButtonText}>📷 Aggiungi foto ({foto.length}/3)</Text>
+            <TouchableOpacity testID="dona-add-photo" style={styles.secondaryButton} onPress={aggiungiFoto} disabled={uploadingPhoto}>
+              {uploadingPhoto ? (
+                <ActivityIndicator color={COLORS.primary} />
+              ) : (
+                <Text style={styles.secondaryButtonText}>📷 Aggiungi foto ({foto.length}/3)</Text>
+              )}
             </TouchableOpacity>
             <View style={styles.fotoRow}>
               {foto.map((uri, i) => (

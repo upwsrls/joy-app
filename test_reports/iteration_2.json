@@ -1,0 +1,54 @@
+{
+  "summary": "V2 backend regression after modular refactor + Cloudinary migration. Updated existing tests to V2 schema (profile.foto_url, doni.foto_urls), added new test_uploads.py (real Cloudinary roundtrip) and test_backward_compat.py (legacy foto_base64 / foto_base64_list rehydration via direct Mongo seeding). Result: 42/42 tests PASS (100%) against public ingress URL https://mood-tracker-619.preview.emergentagent.com. All 21 routes verified, Cloudinary upload returns valid https://res.cloudinary.com/drmrh9h7f/joy/<user_id>/... URLs, auth gating uniform across all protected endpoints.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "passlib/bcrypt", "issue": "Benign 'AttributeError: module bcrypt has no attribute __about__' warning still logged on backend startup (pre-existing from iteration_1). Functionality unaffected. Pin bcrypt<5.0 or upgrade passlib."},
+      {"endpoint": "GET /api/profile/me & /api/profile/{user_id}", "issue": "Returns 200 with body 'null' when profile does not exist (matches Optional[ProfileOut] contract; mobile UI must handle null)."},
+      {"endpoint": "POST /api/doni", "issue": "Pydantic max_length=3 on foto_urls returns 422 (not localized 400) when >3 photos. Inconsistent with the empty-list case which returns 400 with Italian message. Cosmetic only."},
+      {"endpoint": "POST /api/uploads/image", "issue": "12 MB raw-base64 cap not covered by an automated test (skipped because uploading 12 MB of payload through the public ingress would be slow/flaky). Manual review confirms the check is in place."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/conftest.py",
+    "/app/backend/tests/test_auth.py",
+    "/app/backend/tests/test_profile.py",
+    "/app/backend/tests/test_doni.py",
+    "/app/backend/tests/test_chat.py",
+    "/app/backend/tests/test_uploads.py",
+    "/app/backend/tests/test_backward_compat.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Pin bcrypt to a passlib-compatible version (e.g. bcrypt<4.1) to silence startup warning.",
+    "(Optional) Wrap the Pydantic max_length=3 violation on foto_urls into a custom 400 with a localized Italian message for consistency with the empty-list case.",
+    "(Optional) Add a 413 test for >12 MB base64 payload on /api/uploads/image when test infra allows large bodies."
+  ],
+  "critical_code_review_comments": [
+    "core/cloudinary_service.upload_base64 prefixes raw base64 with data:image/jpeg even if the bytes are PNG; Cloudinary auto-detects format so this is harmless, but consider sniffing the magic header for clarity.",
+    "routes/uploads.py forces folder = f'joy/{user[id]}' which is correct (overrides any client-supplied folder) - good security posture.",
+    "routes/profile.py and routes/dono.py both implement the backward-compat fallback (foto_base64 -> foto_url, foto_base64_list -> foto_urls) only on read paths; new writes correctly persist only the new field names. Verified end-to-end via test_backward_compat.py.",
+    "DELETE /api/doni/{id} calls safe_destroy() best-effort on Cloudinary URLs only when they start with 'http' - safely skips legacy base64 strings (avoids accidental Cloudinary API calls with garbage public_ids).",
+    "All 21 routes correctly mounted under /api prefix (root + 3 auth + 3 profile + 1 uploads + 5 doni + 4 chat = 17 + index = matches expected 21 with method variants).",
+    "core/security.get_current_user returns 401 for missing/invalid/expired tokens uniformly - confirmed by negative tests in every module.",
+    "core/database.ensure_indexes runs on startup; unique indexes on users.email, users.id, profiles.user_id, doni.id, conversazioni.id verified to enforce uniqueness via duplicate-email registration test."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_doni.py (rewritten for V2 foto_urls schema)",
+    "/app/backend/tests/test_profile.py (rewritten for V2 foto_url field, added explicit foto_url roundtrip test)",
+    "/app/backend/tests/test_uploads.py (new - Cloudinary upload success/empty/no-auth)",
+    "/app/backend/tests/test_backward_compat.py (new - direct Mongo seeding of legacy docs, validates rehydration on reads)"
+  ],
+  "success_rate": {"backend": "100% (42/42)", "frontend": "n/a (not in scope)"},
+  "seed_data_creation": "TEST_-prefixed users + profiles + doni + conversations + messages created via API. test_backward_compat.py inserts legacy-schema docs directly via pymongo and cleans them up at end of each test. No production data touched.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Public BASE URL is https://mood-tracker-619.preview.emergentagent.com (env var EXPO_PUBLIC_BACKEND_URL). Pre-existing user test1@joy.it / test123 still works. Run regression: `cd /app/backend/tests && EXPO_PUBLIC_BACKEND_URL=https://mood-tracker-619.preview.emergentagent.com python -m pytest -v --junitxml=/app/test_reports/pytest/pytest_results.xml`. V2 schema is canonical: profile.foto_url (string URL), doni.foto_urls (List[str]). Backward-compat read-path tests in test_backward_compat.py require pymongo + load /app/backend/.env. Cloudinary credentials are live; uploads land in res.cloudinary.com/drmrh9h7f/joy/<user_id>/.",
+  "rca_of_issue": "No new issues. All V2 features (modular routes, Cloudinary upload, field renames, backward compatibility) verified working end-to-end. Backend service healthy after both backend.err.log warnings and the env file fix from iteration_1 remain stable."
+}

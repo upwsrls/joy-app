@@ -109,9 +109,9 @@ export default function DettaglioDonoScreen() {
         <Text style={styles.title}>{dono.titolo}</Text>
         <Text style={styles.categoria}>Categoria: {dono.categoria}</Text>
 
-        {dono.foto_base64_list && dono.foto_base64_list.length > 0 && (
+        {dono.foto_urls && dono.foto_urls.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: SPACING.m }}>
-            {dono.foto_base64_list.map((url, i) => (
+            {dono.foto_urls.map((url, i) => (
               <Image key={i} source={{ uri: url }} style={styles.foto} />
             ))}
           </ScrollView>

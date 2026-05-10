@@ -31,7 +31,7 @@ export type Profile = {
   nome: string;
   citta: string;
   telefono?: string;
-  foto_base64?: string | null;
+  foto_url?: string | null;
 };
 
 export type Dono = {
@@ -42,7 +42,7 @@ export type Dono = {
   categoria: string;
   lat: number;
   lng: number;
-  foto_base64_list: string[];
+  foto_urls: string[];
   ritirato: boolean;
   created_at: string;
   donatore_nome?: string | null;

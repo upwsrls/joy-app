@@ -1,4 +1,4 @@
-"""Profile tests: GET /api/profile/me, PUT /api/profile/me, GET /api/profile/{user_id}"""
+"""Profile tests: GET /api/profile/me, PUT /api/profile/me, GET /api/profile/{user_id} - V2 (foto_url)."""
 import requests
 import uuid
 from conftest import API
@@ -8,16 +8,16 @@ def test_get_my_profile_returns_null_for_new_user(session, make_user):
     u = make_user('TEST_profnew')
     r = session.get(f"{API}/profile/me", headers=u['headers'])
     assert r.status_code == 200, r.text
-    # Should be null (None) initially
     assert r.json() is None
 
 
-def test_put_profile_then_get(session, user_a):
+def test_put_profile_with_foto_url_then_get(session, user_a):
+    foto_url = 'https://res.cloudinary.com/drmrh9h7f/image/upload/v1/joy/avatar.jpg'
     payload = {
         'nome': 'Mario Rossi',
         'citta': 'Milano',
         'telefono': '+390123456789',
-        'foto_base64': None,
+        'foto_url': foto_url,
     }
     r = session.put(f"{API}/profile/me", json=payload, headers=user_a['headers'])
     assert r.status_code == 200, r.text
@@ -25,8 +25,9 @@ def test_put_profile_then_get(session, user_a):
     assert data['nome'] == 'Mario Rossi'
     assert data['citta'] == 'Milano'
     assert data['user_id'] == user_a['user_id']
+    assert data['foto_url'] == foto_url
 
-    # GET to verify persistence
+    # GET to verify persistence + same field name returned
     g = session.get(f"{API}/profile/me", headers=user_a['headers'])
     assert g.status_code == 200
     gdata = g.json()
@@ -34,36 +35,30 @@ def test_put_profile_then_get(session, user_a):
     assert gdata['nome'] == 'Mario Rossi'
     assert gdata['citta'] == 'Milano'
     assert gdata['telefono'] == '+390123456789'
+    assert gdata['foto_url'] == foto_url
 
 
 def test_put_profile_missing_required_fields_returns_422(session, user_a):
-    # nome missing
     r = session.put(f"{API}/profile/me", json={'citta': 'Roma'}, headers=user_a['headers'])
     assert r.status_code == 422
-    # citta missing
     r = session.put(f"{API}/profile/me", json={'nome': 'Tizio'}, headers=user_a['headers'])
     assert r.status_code == 422
 
 
 def test_put_profile_upserts_idempotent(session, user_a):
-    # First PUT
     r1 = session.put(f"{API}/profile/me", json={'nome': 'A', 'citta': 'Roma'}, headers=user_a['headers'])
     assert r1.status_code == 200
-    # Second PUT updates same record
     r2 = session.put(f"{API}/profile/me", json={'nome': 'A2', 'citta': 'Torino'}, headers=user_a['headers'])
     assert r2.status_code == 200
     assert r2.json()['nome'] == 'A2'
     assert r2.json()['citta'] == 'Torino'
-
     g = session.get(f"{API}/profile/me", headers=user_a['headers'])
     assert g.json()['nome'] == 'A2'
     assert g.json()['citta'] == 'Torino'
 
 
 def test_get_profile_by_user_id(session, user_a, user_b):
-    # ensure user_a has a profile
     session.put(f"{API}/profile/me", json={'nome': 'UserA', 'citta': 'Napoli'}, headers=user_a['headers'])
-    # user_b reads user_a's profile
     r = session.get(f"{API}/profile/{user_a['user_id']}", headers=user_b['headers'])
     assert r.status_code == 200, r.text
     data = r.json()

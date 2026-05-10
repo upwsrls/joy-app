@@ -25,8 +25,9 @@ export default function ProfileSetupScreen() {
   const [nome, setNome] = useState('');
   const [citta, setCitta] = useState('');
   const [telefono, setTelefono] = useState('');
-  const [fotoBase64, setFotoBase64] = useState<string | null>(null);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const pickPhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -42,7 +43,16 @@ export default function ProfileSetupScreen() {
       base64: true,
     });
     if (!res.canceled && res.assets[0]?.base64) {
-      setFotoBase64(`data:image/jpeg;base64,${res.assets[0].base64}`);
+      try {
+        setUploading(true);
+        const dataUrl = `data:image/jpeg;base64,${res.assets[0].base64}`;
+        const up = await api.post('/uploads/image', { base64: dataUrl });
+        setFotoUrl(up.data.secure_url);
+      } catch {
+        Alert.alert('Errore', 'Upload foto fallito. Riprova.');
+      } finally {
+        setUploading(false);
+      }
     }
   };
 
@@ -56,7 +66,7 @@ export default function ProfileSetupScreen() {
         nome: nome.trim(),
         citta: citta.trim(),
         telefono: telefono.trim(),
-        foto_base64: fotoBase64,
+        foto_url: fotoUrl,
       });
       await refreshProfile();
       Alert.alert('Perfetto! ✨', 'Il tuo profilo è pronto.');
@@ -86,14 +96,18 @@ export default function ProfileSetupScreen() {
             Metti il tuo nome, dove vivi e (se vuoi) una foto: così tutti si fidano di più!
           </Text>
 
-          <TouchableOpacity testID="profile-photo-picker" onPress={pickPhoto} style={styles.avatar}>
-            {fotoBase64 ? (
-              <Image source={{ uri: fotoBase64 }} style={styles.avatarImg} />
+          <TouchableOpacity testID="profile-photo-picker" onPress={pickPhoto} style={styles.avatar} disabled={uploading}>
+            {uploading ? (
+              <ActivityIndicator color={COLORS.primary} />
+            ) : fotoUrl ? (
+              <Image source={{ uri: fotoUrl }} style={styles.avatarImg} />
             ) : (
               <Text style={styles.avatarPlaceholder}>📸</Text>
             )}
           </TouchableOpacity>
-          <Text style={styles.avatarLabel}>{fotoBase64 ? 'Cambia foto' : 'Aggiungi foto profilo'}</Text>
+          <Text style={styles.avatarLabel}>
+            {uploading ? 'Caricamento…' : fotoUrl ? 'Cambia foto' : 'Aggiungi foto profilo'}
+          </Text>
 
           <View style={styles.card}>
             <TextInput

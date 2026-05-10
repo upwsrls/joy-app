@@ -134,8 +134,8 @@ export default function MappaScreen() {
                   style={[styles.donoCard, isMine && { borderColor: COLORS.error }]}
                   onPress={() => apriDono(d)}
                 >
-                  {d.foto_base64_list?.[0] ? (
-                    <Image source={{ uri: d.foto_base64_list[0] }} style={styles.donoImg} />
+                  {d.foto_urls?.[0] ? (
+                    <Image source={{ uri: d.foto_urls[0] }} style={styles.donoImg} />
                   ) : (
                     <View style={[styles.donoImg, { backgroundColor: COLORS.lightGray }]} />
                   )}
