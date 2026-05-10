@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,32 +12,77 @@ import {
   ScrollView,
   Image,
   Modal,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { api } from '../lib/api';
 import { COLORS, SPACING, RADIUS, SHADOW, CATEGORIE } from '../lib/theme';
 
+type CityRes = {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+};
+
 export default function DonaScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ lat?: string; lng?: string; cityName?: string }>();
 
+  // Form state — preserved across modal openings
   const [foto, setFoto] = useState<string[]>([]);
   const [titolo, setTitolo] = useState('');
   const [descrizione, setDescrizione] = useState('');
   const [categoria, setCategoria] = useState<string>('');
-  const [posizione, setPosizione] = useState<{ latitude: number; longitude: number } | null>(
-    params.lat && params.lng
-      ? { latitude: parseFloat(params.lat as string), longitude: parseFloat(params.lng as string) }
-      : null
-  );
-  const [posizioneLabel, setPosizioneLabel] = useState<string>(
-    (params.cityName as string) || ''
-  );
-  const [modalVisible, setModalVisible] = useState(false);
+  const [posizione, setPosizione] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [posizioneLabel, setPosizioneLabel] = useState<string>('');
+
+  // UI state
+  const [catModalVisible, setCatModalVisible] = useState(false);
+  const [cityModalVisible, setCityModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
+
+  // City search state
+  const [query, setQuery] = useState('');
+  const [risultati, setRisultati] = useState<CityRes[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (!cityModalVisible) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (query.trim().length < 2) {
+      setRisultati([]);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      if (abortRef.current) abortRef.current.abort();
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&addressdetails=0`,
+          { signal: ctrl.signal, headers: { 'Accept-Language': 'it' } }
+        );
+        const data = (await res.json()) as CityRes[];
+        setRisultati(data || []);
+      } catch (e: any) {
+        if (e?.name !== 'AbortError') setRisultati([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query, cityModalVisible]);
 
   const aggiungiFoto = async () => {
     const remaining = 3 - foto.length;
@@ -64,21 +109,41 @@ export default function DonaScreen() {
   const rimuoviFoto = (i: number) => setFoto(foto.filter((_, idx) => idx !== i));
 
   const usaGPS = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permesso negato', 'Servono i permessi per la posizione.');
-      return;
-    }
     try {
+      setGpsLoading(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permesso negato', 'Servono i permessi per la posizione.');
+        return;
+      }
       const loc = await Location.getCurrentPositionAsync({});
       setPosizione({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
-      setPosizioneLabel('Posizione attuale 🧭');
+      // Try reverse-geocode for a friendly label
+      try {
+        const places = await Location.reverseGeocodeAsync({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
+        const p = places?.[0];
+        const label = p?.city || p?.subregion || p?.region || 'Posizione attuale';
+        setPosizioneLabel(label);
+      } catch {
+        setPosizioneLabel('Posizione attuale');
+      }
     } catch {
       Alert.alert('Errore', 'Impossibile ottenere la posizione.');
+    } finally {
+      setGpsLoading(false);
     }
   };
 
-  const apriCercaCitta = () => router.push('/cerca-citta');
+  const scegliCitta = (item: CityRes) => {
+    setPosizione({ latitude: parseFloat(item.lat), longitude: parseFloat(item.lon) });
+    setPosizioneLabel(item.display_name.split(',')[0]);
+    setCityModalVisible(false);
+    setQuery('');
+    setRisultati([]);
+  };
 
   const pubblica = async () => {
     if (!titolo.trim()) return Alert.alert('Dai un nome alla tua gioia');
@@ -157,22 +222,39 @@ export default function DonaScreen() {
             />
 
             <Text style={styles.sectionTitle}>Dove si trova? 🏡</Text>
-            <View style={styles.row}>
-              <TouchableOpacity testID="dona-gps-btn" style={[styles.secondaryButton, { flex: 1, marginRight: 4 }]} onPress={usaGPS}>
-                <Text style={styles.secondaryButtonText}>📍 Posizione attuale</Text>
-              </TouchableOpacity>
-              <TouchableOpacity testID="dona-citta-btn" style={[styles.secondaryButton, { flex: 1, marginLeft: 4 }]} onPress={apriCercaCitta}>
-                <Text style={styles.secondaryButtonText}>🌆 Scegli città</Text>
-              </TouchableOpacity>
-            </View>
-            {posizione && (
-              <Text style={styles.successText}>
-                ✅ {posizioneLabel || 'Posizione impostata'}
-              </Text>
+
+            {/* Big primary GPS button */}
+            <TouchableOpacity
+              testID="dona-gps-btn"
+              style={styles.gpsButton}
+              onPress={usaGPS}
+              disabled={gpsLoading}
+            >
+              {gpsLoading ? (
+                <ActivityIndicator color={COLORS.white} />
+              ) : (
+                <Text style={styles.gpsButtonText}>📍 Usa la mia posizione attuale</Text>
+              )}
+            </TouchableOpacity>
+
+            <Text style={styles.orSeparator}>oppure</Text>
+
+            <TouchableOpacity
+              testID="dona-citta-btn"
+              style={styles.secondaryButton}
+              onPress={() => setCityModalVisible(true)}
+            >
+              <Text style={styles.secondaryButtonText}>🌆 Cerca una città</Text>
+            </TouchableOpacity>
+
+            {posizione && !!posizioneLabel && (
+              <View style={styles.successPill} testID="dona-pos-confirm">
+                <Text style={styles.successPillText}>✅ {posizioneLabel}</Text>
+              </View>
             )}
 
             <Text style={styles.sectionTitle}>Categoria magica 🌟</Text>
-            <TouchableOpacity testID="dona-categoria-btn" style={styles.secondaryButton} onPress={() => setModalVisible(true)}>
+            <TouchableOpacity testID="dona-categoria-btn" style={styles.secondaryButton} onPress={() => setCatModalVisible(true)}>
               <Text style={styles.secondaryButtonText}>
                 {categoria ? `Categoria: ${categoria}` : 'Scegli categoria'}
               </Text>
@@ -194,7 +276,8 @@ export default function DonaScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={() => setModalVisible(false)}>
+      {/* Categoria modal */}
+      <Modal visible={catModalVisible} transparent animationType="fade" onRequestClose={() => setCatModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Scegli la categoria</Text>
@@ -205,18 +288,75 @@ export default function DonaScreen() {
                 style={styles.modalItem}
                 onPress={() => {
                   setCategoria(c.nome);
-                  setModalVisible(false);
+                  setCatModalVisible(false);
                 }}
               >
                 <Text style={styles.modalEmoji}>{c.icon}</Text>
                 <Text style={styles.modalItemText}>{c.nome}</Text>
               </TouchableOpacity>
             ))}
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
+            <TouchableOpacity onPress={() => setCatModalVisible(false)}>
               <Text style={styles.modalClose}>Chiudi</Text>
             </TouchableOpacity>
           </View>
         </View>
+      </Modal>
+
+      {/* City search modal */}
+      <Modal visible={cityModalVisible} animationType="slide" onRequestClose={() => setCityModalVisible(false)}>
+        <SafeAreaView style={styles.cityModalSafe}>
+          <View style={styles.cityModalHeader}>
+            <TouchableOpacity testID="city-modal-close" onPress={() => setCityModalVisible(false)}>
+              <Text style={styles.backText}>✕ Chiudi</Text>
+            </TouchableOpacity>
+            <Text style={styles.cityModalTitle}>Cerca città 🗺️</Text>
+            <View style={{ width: 60 }} />
+          </View>
+
+          <View style={{ padding: SPACING.l }}>
+            <TextInput
+              testID="city-search-input"
+              style={styles.input}
+              placeholder="🔍 Scrivi una città (es. Milano)"
+              placeholderTextColor={COLORS.textMedium}
+              value={query}
+              onChangeText={setQuery}
+              autoFocus
+              autoCorrect={false}
+            />
+            {searchLoading && (
+              <View style={styles.searchLoading}>
+                <ActivityIndicator color={COLORS.primary} />
+                <Text style={styles.searchLoadingText}>Cercando...</Text>
+              </View>
+            )}
+          </View>
+
+          <FlatList
+            data={risultati}
+            keyExtractor={(item) => item.place_id.toString()}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingHorizontal: SPACING.l, paddingBottom: SPACING.xl }}
+            ListEmptyComponent={
+              !searchLoading && query.length >= 2 ? (
+                <Text style={styles.emptySearch}>Nessuna città trovata</Text>
+              ) : query.length < 2 ? (
+                <Text style={styles.emptySearch}>Scrivi almeno 2 lettere per cercare</Text>
+              ) : null
+            }
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                testID={`city-result-${item.place_id}`}
+                style={styles.resultItem}
+                onPress={() => scegliCitta(item)}
+              >
+                <Text style={styles.resultTitle}>{item.display_name.split(',')[0]}</Text>
+                <Text style={styles.resultDescription} numberOfLines={1}>{item.display_name}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -257,6 +397,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   secondaryButtonText: { color: COLORS.primary, fontWeight: '700' },
+  gpsButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    borderRadius: RADIUS.medium,
+    alignItems: 'center',
+    marginTop: SPACING.s,
+    minHeight: 48,
+    justifyContent: 'center',
+    ...SHADOW,
+  },
+  gpsButtonText: { color: COLORS.white, fontWeight: '800', fontSize: 15 },
+  orSeparator: {
+    textAlign: 'center',
+    color: COLORS.textMedium,
+    marginVertical: SPACING.s,
+    fontWeight: '600',
+  },
+  successPill: {
+    marginTop: SPACING.s,
+    backgroundColor: '#E8F5E9',
+    borderRadius: RADIUS.medium,
+    paddingVertical: 10,
+    paddingHorizontal: SPACING.m,
+    alignSelf: 'flex-start',
+  },
+  successPillText: { color: COLORS.success, fontWeight: '700' },
   fotoRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: SPACING.s },
   fotoWrapper: { marginRight: 8, marginBottom: 8, position: 'relative' },
   fotoThumb: { width: 90, height: 90, borderRadius: RADIUS.medium },
@@ -281,8 +447,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.textDark,
   },
-  row: { flexDirection: 'row' },
-  successText: { color: COLORS.success, marginTop: 6, fontWeight: '600' },
   primaryButton: {
     backgroundColor: COLORS.primary,
     paddingVertical: 14,
@@ -317,4 +481,23 @@ const styles = StyleSheet.create({
   modalEmoji: { fontSize: 28, marginRight: SPACING.m },
   modalItemText: { fontSize: 16, color: COLORS.textDark, fontWeight: '600' },
   modalClose: { textAlign: 'center', marginTop: SPACING.m, color: COLORS.textMedium },
+  cityModalSafe: { flex: 1, backgroundColor: COLORS.background },
+  cityModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.l,
+    paddingVertical: SPACING.m,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.cardBorder,
+  },
+  cityModalTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textDark },
+  searchLoading: { flexDirection: 'row', alignItems: 'center', marginTop: SPACING.s, justifyContent: 'center' },
+  searchLoadingText: { marginLeft: SPACING.s, color: COLORS.textMedium },
+  separator: { height: 1, backgroundColor: COLORS.cardBorder, marginVertical: 4 },
+  resultItem: { paddingVertical: 12 },
+  resultTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textDark },
+  resultDescription: { fontSize: 12, color: COLORS.textMedium, marginTop: 2 },
+  emptySearch: { textAlign: 'center', color: COLORS.textMedium, paddingVertical: SPACING.l },
 });
