@@ -1,21 +1,24 @@
+// JOY V3 palette — caldo, gioioso, family-friendly
 export const COLORS = {
-  primary: '#4A90E2',
-  primaryLight: '#7BB3F0',
-  background: '#D9ECFF',
+  primary: '#FF6B6B',         // Corallo vivace (CTA, link, accenti)
+  primaryLight: '#FFA5A5',
+  secondary: '#4ECDC4',       // Turchese (accenti positivi, success secondari)
+  accent: '#FFD93D',           // Giallo solare (highlight, badge)
+  background: '#FFF8F0',       // Crema chiaro (sfondo)
   cardBackground: '#FFFFFF',
-  cardBorder: '#BBDEFB',
-  textDark: '#1E3A8A',
-  textMedium: '#5C7CBA',
-  inputBorder: '#B3E5FC',
-  secondaryBg: '#F0F8FF',
-  buttonRitira: '#90CAF9',
-  mapPinBlue: '#4A90E2',
+  cardBorder: '#FFE3E3',       // bordo rosato chiaro
+  textDark: '#2C3E50',
+  textMedium: '#7B8B99',
+  inputBorder: '#FFD9D9',
+  secondaryBg: '#FFF3F0',
+  buttonRitira: '#4ECDC4',
+  mapPinBlue: '#FF6B6B',       // (manteniamo nome, ma ora è corallo per coerenza)
   mapPinRed: '#E53935',
   white: '#FFFFFF',
   error: '#E53935',
-  success: '#43A047',
-  grayText: '#6B7280',
-  lightGray: '#F3F4F6',
+  success: '#51CF66',
+  grayText: '#7B8B99',
+  lightGray: '#F5F0EA',
 };
 
 export const SPACING = { xs: 4, s: 8, m: 16, l: 24, xl: 32, xxl: 48 };
@@ -33,9 +36,9 @@ export const CATEGORIE = [
 ];
 
 export const SHADOW = {
-  shadowColor: '#1E3A8A',
+  shadowColor: '#FF6B6B',
   shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.1,
-  shadowRadius: 8,
+  shadowOpacity: 0.12,
+  shadowRadius: 10,
   elevation: 4,
 };

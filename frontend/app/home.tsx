@@ -30,17 +30,28 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safe} testID="home-screen">
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <View style={styles.avatar}>
+          <TouchableOpacity
+            testID="home-profile-btn"
+            style={styles.avatar}
+            onPress={() => router.push('/profilo-mio')}
+          >
             {profile?.foto_url ? (
               <Image source={{ uri: profile.foto_url }} style={styles.avatarImg} />
             ) : (
               <Text style={styles.avatarPlaceholder}>🙂</Text>
             )}
-          </View>
+          </TouchableOpacity>
           <View style={{ flex: 1, marginLeft: SPACING.m }}>
             <Text style={styles.greeting}>Ciao {profile?.nome || 'amico'} 👋</Text>
             {!!profile?.citta && <Text style={styles.greetingSub}>📍 {profile.citta}</Text>}
           </View>
+          <TouchableOpacity
+            testID="home-profile-icon"
+            onPress={() => router.push('/profilo-mio')}
+            style={styles.gearBtn}
+          >
+            <Text style={styles.gearText}>⚙️</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.welcomeBox}>
@@ -117,6 +128,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  gearBtn: { padding: 8 },
+  gearText: { fontSize: 24 },
   avatarImg: { width: '100%', height: '100%' },
   avatarPlaceholder: { fontSize: 28 },
   greeting: { fontSize: 18, fontWeight: '800', color: COLORS.textDark },

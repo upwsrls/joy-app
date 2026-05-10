@@ -21,6 +21,7 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
   const passwordRef = useRef<TextInput>(null);
@@ -92,18 +93,35 @@ export default function LoginScreen() {
               <Text style={styles.errorText}>Email non valida. Esempio: nome@esempio.com</Text>
             )}
 
-            <TextInput
-              testID="login-password-input"
-              ref={passwordRef}
-              style={styles.input}
-              placeholder="🔑 Password"
-              placeholderTextColor={COLORS.textMedium}
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-              returnKeyType="done"
-              onSubmitEditing={onLogin}
-            />
+            <View style={{ position: 'relative' }}>
+              <TextInput
+                testID="login-password-input"
+                ref={passwordRef}
+                style={[styles.input, { paddingRight: 44 }]}
+                placeholder="🔑 Password"
+                placeholderTextColor={COLORS.textMedium}
+                secureTextEntry={!showPwd}
+                value={password}
+                onChangeText={setPassword}
+                returnKeyType="done"
+                onSubmitEditing={onLogin}
+              />
+              <TouchableOpacity
+                testID="login-toggle-pwd"
+                onPress={() => setShowPwd(!showPwd)}
+                style={styles.eyeBtn}
+              >
+                <Text style={styles.eyeText}>{showPwd ? '🙈' : '👁'}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              testID="login-forgot-btn"
+              onPress={() => router.push('/forgot-password')}
+              style={{ marginTop: 6, alignSelf: 'flex-end' }}
+            >
+              <Text style={styles.forgotText}>Hai dimenticato la password?</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               testID="login-submit-button"
@@ -196,4 +214,7 @@ const styles = StyleSheet.create({
   primaryButtonText: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
   linkText: { fontSize: 14, color: COLORS.textDark, textAlign: 'center' },
   linkBold: { color: COLORS.primary, fontWeight: '700' },
+  forgotText: { color: COLORS.primary, fontWeight: '600', fontSize: 13 },
+  eyeBtn: { position: 'absolute', right: 8, top: 18, padding: 6 },
+  eyeText: { fontSize: 20 },
 });

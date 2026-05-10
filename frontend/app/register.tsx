@@ -21,6 +21,7 @@ export default function RegisterScreen() {
   const { signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
 
@@ -82,15 +83,24 @@ export default function RegisterScreen() {
               )}
             </View>
 
-            <TextInput
-              testID="register-password-input"
-              style={styles.input}
-              placeholder="🔑 Password (min 6 caratteri)"
-              placeholderTextColor={COLORS.textMedium}
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+            <View style={{ position: 'relative' }}>
+              <TextInput
+                testID="register-password-input"
+                style={[styles.input, { paddingRight: 44 }]}
+                placeholder="🔑 Password (min 6 caratteri)"
+                placeholderTextColor={COLORS.textMedium}
+                secureTextEntry={!showPwd}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity
+                testID="register-toggle-pwd"
+                onPress={() => setShowPwd(!showPwd)}
+                style={styles.eyeBtn}
+              >
+                <Text style={styles.eyeText}>{showPwd ? '🙈' : '👁'}</Text>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               testID="register-submit-button"
@@ -189,4 +199,6 @@ const styles = StyleSheet.create({
   primaryButtonText: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
   linkText: { fontSize: 14, color: COLORS.textDark, textAlign: 'center' },
   linkBold: { color: COLORS.primary, fontWeight: '700' },
+  eyeBtn: { position: 'absolute', right: 8, top: 18, padding: 6 },
+  eyeText: { fontSize: 20 },
 });
