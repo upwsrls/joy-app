@@ -1,0 +1,53 @@
+{
+  "summary": "First backend testing pass after Supabase->FastAPI+MongoDB migration. Wrote pytest suite covering auth, profile, doni and chat. All 37 tests passing (100%) against public ingress URL. Found and fixed a CRITICAL malformed /app/backend/.env file (DB_NAME and JWT_SECRET concatenated on the same line without a newline), which would cause backend to KeyError on the next clean startup despite the currently-running process being healthy. After fix, restarted backend and verified all endpoints work end-to-end.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "passlib/bcrypt", "issue": "Benign warning '(trapped) error reading bcrypt version' on every startup. Functionality (hash/verify) works fine, but log noise is significant. Pin bcrypt<5.0 or upgrade passlib."},
+      {"endpoint": "/api/profile/{user_id}", "issue": "Returns 200 with body 'null' when profile does not exist. Frontend should handle this; arguably 404 would be more conventional, but matches the response_model=Optional[ProfileOut] contract."},
+      {"endpoint": "POST /api/doni", "issue": "Pydantic max_length=3 on foto_base64_list returns 422 (Unprocessable Entity) for >3 photos rather than a custom 400 with localized message. Acceptable but inconsistent with the no-photo case which returns 400."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/conftest.py",
+    "/app/backend/tests/test_auth.py",
+    "/app/backend/tests/test_profile.py",
+    "/app/backend/tests/test_doni.py",
+    "/app/backend/tests/test_chat.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Verify /app/backend/.env content is now correct (one key per line). The file was malformed at the start of this iteration; fix has been applied.",
+    "(Optional) Pin bcrypt to a passlib-compatible version to silence the 'AttributeError: module bcrypt has no attribute __about__' warning logged on startup.",
+    "(Optional) Consider standardizing photo-count validation: keep both 'no photos' and '>3 photos' returning 400 with a localized message, instead of 422 from Pydantic for the upper bound."
+  ],
+  "critical_code_review_comments": [
+    "server.py line 23 reads os.environ['DB_NAME'] eagerly at import time - any malformed .env causes hard startup crash. Consider using os.environ.get with a clear assertion + log message.",
+    "GET /api/profile/me and /api/profile/{user_id} return null when missing instead of 404; not a bug, but ensure mobile UI handles None response.",
+    "Conversation id format `${a}__${b}` (sorted) is correctly enforced and verified via tests.",
+    "DELETE /api/doni/{id} performs soft-delete (ritirato=true) and lista_doni correctly filters; verified.",
+    "All protected endpoints uniformly return 401 without Authorization header (confirmed via dedicated tests in each module).",
+    "Backend uses uuid4 strings for ids and excludes _id from responses - good.",
+    "No hardcoded URLs/credentials in server.py; all config via env vars."
+  ],
+  "updated_files": [
+    "/app/backend/.env (fixed: added newline between DB_NAME and JWT_SECRET; previously they were concatenated on the same line, causing KeyError on next backend restart)",
+    "/app/backend/tests/conftest.py (new)",
+    "/app/backend/tests/test_auth.py (new)",
+    "/app/backend/tests/test_profile.py (new)",
+    "/app/backend/tests/test_doni.py (new)",
+    "/app/backend/tests/test_chat.py (new)"
+  ],
+  "success_rate": {"backend": "100% (37/37)", "frontend": "n/a (not in scope)"},
+  "seed_data_creation": "Created multiple TEST_-prefixed users, profiles, doni, conversations, messages in test_database. Test data is identifiable via 'TEST_' prefix in emails/titles. No cleanup performed (acceptable for non-prod test_database).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Public BASE URL is https://mood-tracker-619.preview.emergentagent.com (env var EXPO_PUBLIC_BACKEND_URL, NOT EXPO_BACKEND_URL). Pre-existing user test1@joy.it / test123 works. Run regression with: `cd /app/backend/tests && python -m pytest -v --junitxml=/app/test_reports/pytest/pytest_results.xml`. Backend lowercases emails on register/login, so always compare in lowercase.",
+  "rca_of_issue": "ROOT CAUSE: /app/backend/.env had DB_NAME=\"test_database\"JWT_SECRET=\"...\" on the same line (missing newline), so python-dotenv raised 'could not parse statement starting at line 2' and skipped both keys. The backend kept running only because an earlier process had cached env; on the next supervisor reload uvicorn would crash with KeyError: 'DB_NAME' (this exact crash was observed in /var/log/supervisor/backend.err.log during testing). FIX: split the two keys onto separate lines and `sudo supervisorctl restart backend`. VERIFIED: backend restarts cleanly and all 37 tests pass."
+}

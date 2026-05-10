@@ -1,0 +1,67 @@
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+
+export const TOKEN_KEY = 'joy_token';
+
+export const api = axios.create({
+  baseURL: `${BASE_URL}/api`,
+  timeout: 30000,
+});
+
+api.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem(TOKEN_KEY);
+  if (token) {
+    config.headers = config.headers || {};
+    (config.headers as any).Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export type AuthResponse = {
+  access_token: string;
+  token_type: string;
+  user_id: string;
+  email: string;
+};
+
+export type Profile = {
+  user_id: string;
+  nome: string;
+  citta: string;
+  telefono?: string;
+  foto_base64?: string | null;
+};
+
+export type Dono = {
+  id: string;
+  user_id: string;
+  titolo: string;
+  descrizione: string;
+  categoria: string;
+  lat: number;
+  lng: number;
+  foto_base64_list: string[];
+  ritirato: boolean;
+  created_at: string;
+  donatore_nome?: string | null;
+  donatore_citta?: string | null;
+};
+
+export type Conversazione = {
+  id: string;
+  altro_user_id: string;
+  altro_nome: string;
+  altro_citta: string;
+  ultimo_messaggio: string;
+  ultimo_at: string;
+};
+
+export type Messaggio = {
+  id: string;
+  conversazione_id: string;
+  mittente_id: string;
+  testo: string;
+  created_at: string;
+};
