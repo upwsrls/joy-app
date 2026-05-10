@@ -16,15 +16,7 @@ import * as Location from 'expo-location';
 import { api, Dono } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../lib/theme';
-
-let MapView: any = null;
-let Marker: any = null;
-if (Platform.OS !== 'web') {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const maps = require('react-native-maps');
-  MapView = maps.default;
-  Marker = maps.Marker;
-}
+import NativeMap from '../components/NativeMap';
 
 export default function MappaScreen() {
   const router = useRouter();
@@ -122,7 +114,7 @@ export default function MappaScreen() {
         </Text>
       </View>
 
-      {Platform.OS === 'web' || !MapView ? (
+      {Platform.OS === 'web' ? (
         <ScrollView
           style={styles.list}
           contentContainerStyle={{ padding: SPACING.l }}
@@ -163,18 +155,12 @@ export default function MappaScreen() {
           )}
         </ScrollView>
       ) : (
-        <MapView style={styles.map} initialRegion={initialRegion} showsUserLocation>
-          {doni.map((d) => (
-            <Marker
-              key={d.id}
-              coordinate={{ latitude: d.lat, longitude: d.lng }}
-              pinColor={d.user_id === user?.id ? 'red' : COLORS.primary}
-              title={d.titolo}
-              description={`${d.categoria}${d.donatore_nome ? ` · ${d.donatore_nome}` : ''}`}
-              onCalloutPress={() => apriDono(d)}
-            />
-          ))}
-        </MapView>
+        <NativeMap
+          doni={doni}
+          myUserId={user?.id}
+          initialRegion={initialRegion}
+          onMarkerPress={apriDono}
+        />
       )}
     </SafeAreaView>
   );
@@ -188,7 +174,6 @@ const styles = StyleSheet.create({
   backText: { color: COLORS.primary, fontWeight: '700', fontSize: 16, marginBottom: SPACING.s },
   title: { fontSize: 22, fontWeight: '900', color: COLORS.textDark },
   subtitle: { fontSize: 13, color: COLORS.textMedium, marginTop: 4 },
-  map: { flex: 1 },
   list: { flex: 1 },
   empty: { textAlign: 'center', color: COLORS.textMedium, marginTop: SPACING.xl, fontSize: 16 },
   donoCard: {
