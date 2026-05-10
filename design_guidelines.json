@@ -1,0 +1,204 @@
+{
+  "theme": {
+    "colors": {
+      "primary": "#4A90E2",
+      "background": "#D9ECFF",
+      "cardBorder": "#BBDEFB",
+      "textDark": "#1E3A8A",
+      "white": "#FFFFFF",
+      "error": "#E53935",
+      "success": "#43A047",
+      "mapPinBlue": "#4A90E2",
+      "mapPinRed": "#E53935",
+      "grayText": "#6B7280",
+      "lightGray": "#F3F4F6",
+      "overlay": "rgba(30, 58, 138, 0.4)"
+    },
+    "typography": {
+      "fontFamily": "System",
+      "sizes": {
+        "h1": 32,
+        "h2": 24,
+        "h3": 20,
+        "body": 16,
+        "small": 14,
+        "tiny": 12
+      },
+      "weights": {
+        "bold": "700",
+        "semiBold": "600",
+        "regular": "400"
+      }
+    },
+    "spacing": {
+      "xs": 4,
+      "s": 8,
+      "m": 16,
+      "l": 24,
+      "xl": 32,
+      "xxl": 48
+    },
+    "border": {
+      "radius": {
+        "small": 8,
+        "medium": 16,
+        "large": 24,
+        "round": 9999
+      },
+      "width": {
+        "thin": 1,
+        "thick": 2
+      }
+    },
+    "shadows": {
+      "card": {
+        "shadowColor": "#1E3A8A",
+        "shadowOffset": { "width": 0, "height": 4 },
+        "shadowOpacity": 0.1,
+        "shadowRadius": 8,
+        "elevation": 4
+      }
+    }
+  },
+  "general_guidelines": {
+    "react_native_specifics": [
+      "Use StyleSheet.create for all styles. Do NOT use CSS or Tailwind classes.",
+      "Ensure all screens use SafeAreaView to avoid notches and home indicators.",
+      "Forms must be wrapped in KeyboardAvoidingView (behavior='padding' on iOS) and ScrollView.",
+      "Touch targets must be at least 44x44 points for accessibility.",
+      "Use platform-specific shadows (shadowColor/Offset/Opacity/Radius for iOS, elevation for Android).",
+      "Use Expo Router (file-based routing) structure.",
+      "All text must use Italian copy and maintain a warm, family-friendly tone.",
+      "Implement the 'Cloud/light-blue' aesthetic throughout the UI with rounded corners and soft shadows."
+    ],
+    "animations": [
+      "Use 'react-native-reanimated' for high-performance animations.",
+      "Fade-in animations for screen mounting (opacity 0 -> 1 over 300ms).",
+      "Spring animations for modals and bottom sheets to make them feel playful and organic.",
+      "Pulse or gentle scaling effect on the main 'Dona' action button.",
+      "Shared element transitions for gift images from list/map to detail view."
+    ]
+  },
+  "screens": {
+    "auth": {
+      "description": "Login/Register screens",
+      "layout": "Vertical stack centered, cloud background.",
+      "components": [
+        "Email & Password inputs with #BBDEFB border and #FFFFFF background.",
+        "Primary action button (#4A90E2 background, full width, rounded-medium).",
+        "Text links for toggling between Login and Register.",
+        "Tagline display: 'Risvegliamo il bene che è in NOI donando un SORRISO. Il segreto di vivere felici, è DONARE.'"
+      ]
+    },
+    "profile_setup": {
+      "description": "Initial profile setup after registration",
+      "layout": "ScrollView wrapped in KeyboardAvoidingView.",
+      "components": [
+        "Circular Image picker for avatar (placeholder: 👤).",
+        "Inputs for Name, City, Phone.",
+        "'Salva e Continua' primary button."
+      ]
+    },
+    "onboarding": {
+      "description": "4-page swipable onboarding carousel",
+      "layout": "Horizontal FlatList with pagingEnabled or react-native-pager-view.",
+      "components": [
+        "Large illustration per slide.",
+        "Friendly Italian title and description.",
+        "Pagination dots at the bottom.",
+        "'Non mostrare più' (Don't show again) text button.",
+        "'Inizia' (Start) button on the last slide."
+      ]
+    },
+    "home": {
+      "description": "Main dashboard",
+      "layout": "ScrollView with a header welcoming the user.",
+      "components": [
+        "Header with user avatar and 'Ciao [Nome] 👋'",
+        "Three large action cards arranged vertically or in a 2x1 grid (Dona full width, Chat and Ricevi half width).",
+        "Cards should have #FFFFFF background, #BBDEFB border, and drop shadow.",
+        "Each card must feature a prominent emoji (🎁 Dona, 🗺️ Mappa/Ricevi, 💬 Chat)."
+      ]
+    },
+    "dona": {
+      "description": "Form to donate an item",
+      "layout": "ScrollView with KeyboardAvoidingView.",
+      "components": [
+        "Image picker section (up to 3 horizontal square slots).",
+        "Title input.",
+        "Description multiline input.",
+        "Category picker (horizontal scrolling chips with emojis: 🍎 Cibo, 👶 Vestiti bimbo, 🧸 Giochi, 📚 Libri, 🛏️ Coperte, 🎨 Disegni, ✨ Altro).",
+        "Location picker (Switch to use GPS or text input for City via Nominatim API).",
+        "Primary 'Pubblica Regalo' button."
+      ]
+    },
+    "map": {
+      "description": "Map to browse available gifts",
+      "layout": "Full screen react-native-maps instance.",
+      "components": [
+        "Map with custom light styling if possible.",
+        "Blue pins (#4A90E2) for others' gifts.",
+        "Red pins (#E53935) for user's own gifts.",
+        "Bottom sheet or custom callout when tapping a pin showing mini gift card (Title, Category emoji, Distance)."
+      ],
+      "web_fallback": "A simple list view of nearby gifts since native maps don't render easily on React Native Web without extra config."
+    },
+    "gift_detail": {
+      "description": "Details of a selected gift",
+      "layout": "ScrollView.",
+      "components": [
+        "Image carousel (Header).",
+        "Title, Category, Distance, and Description text.",
+        "Donor info snippet (Name, Avatar).",
+        "If it's someone else's gift: 'Invia Messaggio' (Send message) CTA.",
+        "If it's own gift: 'Modifica' / 'Elimina' options."
+      ]
+    },
+    "chat_list": {
+      "description": "List of active conversations",
+      "layout": "FlatList of chat rows.",
+      "components": [
+        "Row: Avatar, Name, Last message preview, Timestamp.",
+        "Empty state: 'Nessuna chat attiva' with sleeping airplane illustration."
+      ]
+    },
+    "chat_detail": {
+      "description": "1:1 messaging interface",
+      "layout": "KeyboardAvoidingView with inverted FlatList for messages.",
+      "components": [
+        "Header with partner's name and back button.",
+        "Message bubbles (Blue #4A90E2 for own, White #FFFFFF with border for partner).",
+        "Input bar with text field and send icon."
+      ]
+    }
+  },
+  "media": {
+    "onboarding": [
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/c007779d-eef2-4c61-8337-0e20e51529de/images/e17c5752d80c0ce9b8cd552e0822d67f41a83df9dc4ec8c5cd7d8bdceb412d02.png",
+        "description": "Illustration for onboarding slide about donating/exchanging gifts."
+      },
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/c007779d-eef2-4c61-8337-0e20e51529de/images/9053154726c0959e2bab2ab77934e8768874dc68318e75646e105326c58a3e69.png",
+        "description": "Illustration for onboarding slide about finding gifts on the map."
+      },
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/c007779d-eef2-4c61-8337-0e20e51529de/images/3d477de5983a970cc0f9bf111ec662da8ea3ab3c3c31b474dfc9036663b407a8.png",
+        "description": "Illustration for onboarding slide about chatting."
+      }
+    ],
+    "empty_states": [
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/c007779d-eef2-4c61-8337-0e20e51529de/images/1df44b215f035050cd68e40a4defa00d0337bcbcc735cca8c8e47b23902d69dd.png",
+        "description": "Empty box sad face - Use when there are no gifts found in the area."
+      },
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/c007779d-eef2-4c61-8337-0e20e51529de/images/89206a11f1c74975bc72f5f28ce9d2ce36a7386d671f3196a48b8fb9e57bfbe6.png",
+        "description": "Sleeping paper airplane - Use when the chat list is empty."
+      }
+    ]
+  },
+  "testing": {
+    "attributes": "All interactive and key informational elements MUST include a `testID` attribute (the React Native equivalent of `data-testid`). Example: `testID='login-submit-button'`."
+  }
+}
