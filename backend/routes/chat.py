@@ -5,6 +5,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from core.database import db
 from core.security import get_current_user, now_utc
+from core.push import send_to_users, fire_and_forget
+from routes.notifiche import mark_conversation_read
 
 router = APIRouter(prefix='/conversazioni', tags=['chat'])
 
@@ -16,6 +18,7 @@ class ConversazioneOut(BaseModel):
     altro_citta: str
     ultimo_messaggio: str
     ultimo_at: str
+    unread: int = 0
 
 
 class MessaggioIn(BaseModel):
@@ -50,6 +53,14 @@ async def lista(user=Depends(get_current_user)):
             {'_id': 0},
             sort=[('created_at', -1)],
         )
+        # Compute unread for this user in this conversation
+        lr = await db.letture.find_one(
+            {'user_id': user['id'], 'conv_id': c['id']}, {'_id': 0, 'last_read_at': 1}
+        )
+        q: dict = {'conversazione_id': c['id'], 'mittente_id': altro_id}
+        if lr and lr.get('last_read_at'):
+            q['created_at'] = {'$gt': lr['last_read_at']}
+        unread = await db.messaggi.count_documents(q)
         out.append(ConversazioneOut(
             id=c['id'],
             altro_user_id=altro_id,
@@ -57,6 +68,7 @@ async def lista(user=Depends(get_current_user)):
             altro_citta=(prof or {}).get('citta') or '',
             ultimo_messaggio=(last or {}).get('testo') or 'Nessun messaggio ancora',
             ultimo_at=(last or {}).get('created_at') or c.get('ultimo_at') or c['created_at'],
+            unread=unread,
         ))
     return out
 
@@ -101,6 +113,8 @@ async def lista_messaggi(conv_id: str, user=Depends(get_current_user)):
     if not conv or user['id'] not in (conv['utente1'], conv['utente2']):
         raise HTTPException(status_code=403, detail='Non autorizzato')
     items = await db.messaggi.find({'conversazione_id': conv_id}, {'_id': 0}).sort('created_at', 1).to_list(2000)
+    # Opening the chat = marking it as read for this user
+    await mark_conversation_read(user['id'], conv_id)
     return [MessaggioOut(**m) for m in items]
 
 
@@ -124,4 +138,16 @@ async def invia_messaggio(conv_id: str, data: MessaggioIn, user=Depends(get_curr
         {'id': conv_id},
         {'$set': {'ultimo_at': msg['created_at']}},
     )
+
+    # Push notification to the OTHER user
+    altro_id = conv['utente2'] if conv['utente1'] == user['id'] else conv['utente1']
+    sender_prof = await db.profiles.find_one({'user_id': user['id']}, {'_id': 0, 'nome': 1})
+    sender_name = (sender_prof or {}).get('nome') or 'Utente JOY'
+    fire_and_forget(send_to_users(
+        [altro_id],
+        title=f'💬 {sender_name}',
+        body=msg['testo'][:140],
+        data={'type': 'chat', 'conv_id': conv_id},
+    ))
+
     return MessaggioOut(**msg)

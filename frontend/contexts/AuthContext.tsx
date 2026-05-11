@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api, TOKEN_KEY, Profile } from '../lib/api';
+import {
+  registerForPushNotificationsAsync,
+  registerTokenWithBackend,
+  clearServerToken,
+} from '../lib/notifications';
 
 type User = { id: string; email: string };
 
@@ -36,6 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         setProfile(null);
       }
+      // Register push token (best-effort, silent on failure & on web)
+      registerForPushNotificationsAsync().then((token) => {
+        if (token) registerTokenWithBackend(token);
+      });
     } catch {
       setUser(null);
       setProfile(null);
@@ -82,6 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    await clearServerToken();
     await AsyncStorage.removeItem(TOKEN_KEY);
     setUser(null);
     setProfile(null);

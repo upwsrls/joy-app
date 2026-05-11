@@ -15,6 +15,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from core.database import db
 from core.security import get_current_user, now_utc
+from core.push import send_to_users, fire_and_forget
 
 
 router = APIRouter(tags=['recensioni'])
@@ -64,6 +65,17 @@ async def ritira_dono(dono_id: str, user=Depends(get_current_user)):
             }
         },
     )
+
+    # Notify the donor that their gift has been picked up
+    recipient_prof = await db.profiles.find_one({'user_id': user['id']}, {'_id': 0, 'nome': 1})
+    recipient_name = (recipient_prof or {}).get('nome') or 'Qualcuno'
+    fire_and_forget(send_to_users(
+        [d['user_id']],
+        title='🎁 La tua gioia è stata ritirata!',
+        body=f'{recipient_name} ha ricevuto "{d.get("titolo", "la gioia")}".',
+        data={'type': 'ritiro', 'dono_id': dono_id},
+    ))
+
     return RitiroOut(ok=True, dono_id=dono_id, needs_review=True)
 
 
@@ -91,6 +103,17 @@ async def crea_recensione(data: RecensioneIn, user=Depends(get_current_user)):
         'created_at': now_utc().isoformat(),
     }
     await db.recensioni.insert_one(doc)
+
+    # Notify donor of new review
+    reviewer_name = (p or {}).get('nome') or 'Qualcuno'
+    stars_str = '⭐' * int(data.stars)
+    fire_and_forget(send_to_users(
+        [d['user_id']],
+        title='⭐ Nuova recensione ricevuta',
+        body=f'{reviewer_name} ti ha lasciato {stars_str}',
+        data={'type': 'recensione', 'dono_id': data.dono_id},
+    ))
+
     return RecensioneOut(reviewer_nome=(p or {}).get('nome'), **doc)
 
 

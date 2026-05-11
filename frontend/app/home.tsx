@@ -81,6 +81,24 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.actionsContainer}>
+          {/* Unread banner: shown only if there are unread chat messages */}
+          {unread > 0 && (
+            <TouchableOpacity
+              testID="home-unread-banner"
+              style={styles.unreadBanner}
+              onPress={() => router.push('/chat-list')}
+            >
+              <Text style={styles.unreadEmoji}>🔔</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.unreadTitle}>
+                  Hai {unread} {unread === 1 ? 'nuovo messaggio' : 'nuovi messaggi'}
+                </Text>
+                <Text style={styles.unreadSub}>Tocca per aprire le chat</Text>
+              </View>
+              <Text style={styles.unreadArrow}>›</Text>
+            </TouchableOpacity>
+          )}
+
           {/* Quick search bar -> apre la Mappa con il filtro applicato */}
           <View style={styles.searchWrap}>
             <Text style={styles.searchIcon}>🔍</Text>
@@ -201,6 +219,21 @@ const styles = StyleSheet.create({
   welcomeLine3: { fontSize: 14, color: COLORS.textMedium, textAlign: 'center' },
   welcomeLine4: { fontSize: 24, fontWeight: '900', color: COLORS.primary, lineHeight: 28 },
   actionsContainer: { marginTop: SPACING.m },
+  unreadBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.large,
+    paddingVertical: SPACING.m,
+    paddingHorizontal: SPACING.m,
+    marginBottom: SPACING.m,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  unreadEmoji: { fontSize: 28, marginRight: SPACING.m },
+  unreadTitle: { fontSize: 15, fontWeight: '900', color: COLORS.textDark },
+  unreadSub: { fontSize: 12, color: COLORS.textMedium, marginTop: 2 },
+  unreadArrow: { fontSize: 26, fontWeight: '700', color: COLORS.primary, marginLeft: SPACING.s },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',

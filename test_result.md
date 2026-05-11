@@ -205,6 +205,21 @@ backend:
       - working: true
         agent: "testing"
         comment: "PASS - With user A and a freshly registered user B (with profile), POST /api/conversazioni/start/{B} returns 200 with conv id. Messages from both A and B via POST /messaggi -> 200. GET /api/conversazioni from A includes the conv with ultimo_messaggio populated from the latest message. GET /api/conversazioni/{id}/messaggi returns messages in chronological order. A third unrelated user C correctly gets 403 on GET and POST. Starting a conversation with self -> 400."
+      - working: true
+        agent: "testing"
+        comment: "PASS V7b - GET /api/conversazioni now includes the new 'unread' (int) field per conversation. Verified scenario A->B with 3 messages: B's GET /api/conversazioni shows convX.unread=3; after B opens GET /api/conversazioni/{X}/messaggi the unread drops to 0 on next list. mark_conversation_read is correctly invoked from the GET messages route."
+
+  - task: "Push token register/clear + notifiche unread-count (V7b)"
+    implemented: true
+    working: true
+    file: "backend/routes/notifiche.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "PASS - 23/23 V7b checks via EXPO_PUBLIC_BACKEND_URL/api (script: /app/backend_test_v7b.py). POST /api/users/me/push-token with valid ExponentPushToken -> 200 {ok:true,has_token:true}; empty token -> {has_token:false}; missing token field -> {has_token:false}; no auth -> 401. DELETE /api/users/me/push-token -> 200 {ok:true}; GET /api/auth/me still returns 200 (note: current UserOut model exposes only {id,email} - it does NOT serialize push_token, but DB doc has push_token set to null after delete). GET /api/notifiche/unread-count: baseline {messages:0,total:0,per_conversation:{}}; no auth -> 401. End-to-end unread flow: A sends 3 msgs to B -> B's /unread-count={messages:3,total:3,per_conversation:{X:3}} and /conversazioni convX.unread=3; after B GETs /conversazioni/X/messaggi -> /unread-count={0,0,{}} and convX.unread=0. Regressions: /auth/login, /auth/me, /conversazioni/start, /conversazioni/{id}/messaggi, /doni create, /doni/{id}/ritira, /recensioni all 200. No 5xx in backend logs during the run. Push send is fire-and-forget (httpx -> exp.host) and never blocks the POST messaggi route."
 
   - task: "Modular server bootstrap (core + routes wiring)"
     implemented: true
@@ -242,8 +257,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Recensioni + Ritira gioia"
-    - "Doni create/list/detail/delete with Cloudinary URLs + ritira"
+    - "Push token register/clear + notifiche unread-count (V7b)"
+    - "Chat conversations and messages 1:1"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -324,6 +339,35 @@ agent_communication:
       
       All routes are under /api prefix and reachable via EXPO_PUBLIC_BACKEND_URL/api.
       Backend already restarted and healthy. MongoDB at MONGO_URL in backend/.env.
+  - agent: "testing"
+    message: |
+      V7b backend validation COMPLETE. 23/23 backend checks PASS via the public
+      EXPO_PUBLIC_BACKEND_URL/api. Test script at /app/backend_test_v7b.py.
+
+      Coverage:
+      • POST /api/users/me/push-token: valid ExponentPushToken[...] -> 200 {ok:true,has_token:true};
+        empty token "" -> {has_token:false}; missing token field -> {has_token:false};
+        no auth -> 401.
+      • DELETE /api/users/me/push-token: 200 {ok:true}. db.users.push_token is set to null.
+        Note: current /api/auth/me response model (UserOut) only exposes {id,email}, so
+        push_token is NOT serialized in the GET /api/auth/me response. The DB value
+        is correctly cleared. If the frontend needs to read push_token from /auth/me,
+        main agent should add it to UserOut.
+      • GET /api/notifiche/unread-count: baseline {messages:0,total:0,per_conversation:{}};
+        no auth -> 401. End-to-end flow with fresh users A & B: A sends 3 messages to
+        conv X -> B's /unread-count = {messages:3,total:3,per_conversation:{X:3}} and
+        B's GET /api/conversazioni returns convX with unread=3. After B GETs
+        /api/conversazioni/X/messaggi (which invokes mark_conversation_read),
+        /unread-count drops to {0,0,{}} and convX.unread=0.
+      • GET /api/conversazioni: now includes the new "unread" (int) field per conv.
+      • Regressions: POST /api/auth/login, GET /api/auth/me, POST /api/conversazioni/
+        start/{user_id}, POST /api/conversazioni/{id}/messaggi, POST /api/doni,
+        POST /api/doni/{id}/ritira, POST /api/recensioni all return 200.
+      • Push send is fire-and-forget (httpx -> exp.host) and never blocks the route.
+        No 5xx in /var/log/supervisor/backend.*.log during the run.
+
+      Minor (non-blocking): GET /api/auth/me does not surface push_token (UserOut
+      schema). Consider adding it if the FE relies on it for state hydration.
   - agent: "testing"
     message: |
       V7a backend validation COMPLETE. 28/28 backend checks PASS via the public

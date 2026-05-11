@@ -10,6 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.joyapp.giftapp",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Aggiungi foto delle tue gioie da donare",
         "NSCameraUsageDescription": "Scatta foto delle tue gioie da donare",
@@ -17,6 +18,7 @@
       }
     },
     "android": {
+      "package": "com.joyapp.giftapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#D9ECFF"
@@ -26,7 +28,8 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "READ_EXTERNAL_STORAGE",
-        "READ_MEDIA_IMAGES"
+        "READ_MEDIA_IMAGES",
+        "POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -55,6 +58,13 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Trova gioie vicino a te"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#FF6B6B",
+          "defaultChannel": "default"
         }
       ]
     ],

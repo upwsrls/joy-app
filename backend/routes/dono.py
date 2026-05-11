@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from core.database import db
 from core.security import get_current_user, now_utc
 from core.cloudinary_service import safe_destroy
+from core.push import send_to_users, fire_and_forget
 
 router = APIRouter(prefix='/doni', tags=['doni'])
 
@@ -97,6 +98,23 @@ async def crea_dono(data: DonoIn, user=Depends(get_current_user)):
         'created_at': now_utc().isoformat(),
     }
     await db.doni.insert_one(doc)
+
+    # Broadcast push to all OTHER users with a registered token
+    other_ids_cur = db.users.find(
+        {'id': {'$ne': user['id']}, 'push_token': {'$exists': True, '$ne': None}},
+        {'_id': 0, 'id': 1},
+    )
+    others = await other_ids_cur.to_list(2000)
+    donor_prof = await db.profiles.find_one({'user_id': user['id']}, {'_id': 0, 'nome': 1, 'citta': 1})
+    donor_name = (donor_prof or {}).get('nome') or 'Qualcuno'
+    citta = (donor_prof or {}).get('citta') or ''
+    fire_and_forget(send_to_users(
+        [u['id'] for u in others],
+        title='🌍 Nuova gioia in Italia!',
+        body=f'{donor_name}{(" · " + citta) if citta else ""} ha pubblicato: {doc["titolo"][:80]}',
+        data={'type': 'nuova_gioia', 'dono_id': dono_id},
+    ))
+
     return await _enrich(doc)
 
 
