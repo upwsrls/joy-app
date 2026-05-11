@@ -93,15 +93,6 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.welcomeBox}>
-          <Text style={styles.welcomeLine1}>Benvenuto nel</Text>
-          <Text style={styles.welcomeLine2}>Mondo JOY</Text>
-          <Text style={styles.welcomeLine3}>Risvegliamo il bene che è in</Text>
-          <Text style={styles.welcomeLine4}>NOI</Text>
-          <Text style={styles.welcomeLine3}>donando un</Text>
-          <Text style={styles.welcomeLine4}>SORRISO</Text>
-        </View>
-
         <View style={styles.actionsContainer}>
           {/* Unread banner: shown only if there are unread chat messages */}
           {unread > 0 && (
@@ -229,17 +220,11 @@ const styles = StyleSheet.create({
   avatarPlaceholder: { fontSize: 28 },
   greeting: { fontSize: 18, fontWeight: '800', color: COLORS.textDark },
   greetingSub: { fontSize: 13, color: COLORS.textMedium, marginTop: 2 },
-  welcomeBox: { alignItems: 'center', marginVertical: SPACING.m },
-  welcomeLine1: { fontSize: 16, color: COLORS.textMedium, textAlign: 'center' },
-  welcomeLine2: {
-    fontSize: 38,
-    fontWeight: '900',
-    color: COLORS.primary,
-    letterSpacing: 2,
-    marginBottom: SPACING.s,
-  },
-  welcomeLine3: { fontSize: 14, color: COLORS.textMedium, textAlign: 'center' },
-  welcomeLine4: { fontSize: 24, fontWeight: '900', color: COLORS.primary, lineHeight: 28 },
+  welcomeBox: { display: 'none' as const },
+  welcomeLine1: { display: 'none' as const },
+  welcomeLine2: { display: 'none' as const },
+  welcomeLine3: { display: 'none' as const },
+  welcomeLine4: { display: 'none' as const },
   actionsContainer: { marginTop: SPACING.m },
   unreadBanner: {
     flexDirection: 'row',
