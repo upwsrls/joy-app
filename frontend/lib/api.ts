@@ -61,6 +61,7 @@ export type Conversazione = {
   altro_citta: string;
   ultimo_messaggio: string;
   ultimo_at: string;
+  unread?: number;
 };
 
 export type Messaggio = {
