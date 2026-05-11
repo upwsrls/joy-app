@@ -27,7 +27,7 @@ type ViewMode = 'mappa' | 'lista';
 export default function MappaScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const params = useLocalSearchParams<{ q?: string; focus?: string }>();
+  const params = useLocalSearchParams<{ q?: string; focus?: string; mine?: string }>();
 
   const [doni, setDoni] = useState<Dono[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export default function MappaScreen() {
     q: typeof params?.q === 'string' ? params.q : '',
   }));
 
-  const [onlyMine, setOnlyMine] = useState(false);
+  const [onlyMine, setOnlyMine] = useState(params?.mine === '1');
   const focusId = typeof params?.focus === 'string' ? params.focus : undefined;
 
   // Default: sempre mappa (web e mobile). Leaflet gestisce il web, react-native-maps il mobile.

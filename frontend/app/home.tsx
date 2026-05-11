@@ -39,6 +39,10 @@ export default function HomeScreen() {
     }
   };
 
+  const apriMieGioie = () => {
+    router.push({ pathname: '/mappa', params: { mine: '1' } });
+  };
+
   return (
     <SafeAreaView style={styles.safe} testID="home-screen">
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -134,6 +138,20 @@ export default function HomeScreen() {
               <Text style={styles.cardText}>Le tue conversazioni</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Le mie gioie pubblicate → mappa filtrata sui propri doni */}
+          <TouchableOpacity
+            testID="home-mie-gioie-btn"
+            style={styles.mineCard}
+            onPress={apriMieGioie}
+          >
+            <Text style={styles.mineEmoji}>📍</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.mineTitle}>Le mie gioie pubblicate</Text>
+              <Text style={styles.mineText}>Vedi solo i tuoi doni sulla mappa</Text>
+            </View>
+            <Text style={styles.mineArrow}>›</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.bottom}>
@@ -238,6 +256,21 @@ const styles = StyleSheet.create({
   cardEmoji: { fontSize: 32, marginBottom: 6 },
   cardTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textDark },
   cardText: { fontSize: 12, color: COLORS.textMedium, marginTop: 2, textAlign: 'center' },
+  mineCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.large,
+    padding: SPACING.m,
+    marginTop: SPACING.m,
+    borderWidth: 2,
+    borderColor: COLORS.error,
+    ...SHADOW,
+  },
+  mineEmoji: { fontSize: 32, marginRight: SPACING.m },
+  mineTitle: { fontSize: 16, fontWeight: '800', color: COLORS.error },
+  mineText: { fontSize: 12, color: COLORS.textMedium, marginTop: 2 },
+  mineArrow: { fontSize: 28, color: COLORS.error, fontWeight: '700', marginLeft: SPACING.s },
   bottom: { alignItems: 'center', marginTop: SPACING.xl },
   tagline: { fontSize: 14, color: COLORS.textDark, fontWeight: '600', textAlign: 'center' },
   linkText: { color: COLORS.primary, fontWeight: '600', marginTop: SPACING.s },

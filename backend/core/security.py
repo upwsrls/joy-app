@@ -1,4 +1,5 @@
 """Auth helpers: bcrypt, JWT, current-user dependency."""
+import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from fastapi import Depends, HTTPException
@@ -8,6 +9,12 @@ from jose import jwt, JWTError
 from .config import settings
 from .database import db
 
+
+# Passlib 1.7.4 vs bcrypt 4.x: passlib tries to read bcrypt.__about__.__version__ which
+# was removed in bcrypt 4.x. The hashing itself works perfectly, but passlib emits a
+# noisy WARNING + traceback at first use. Silence ONLY that specific bcrypt handler
+# logger; everything else (password reset OTPs, etc.) keeps logging normally.
+logging.getLogger('passlib.handlers.bcrypt').setLevel(logging.ERROR)
 
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 security = HTTPBearer(auto_error=False)
