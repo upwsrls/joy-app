@@ -99,7 +99,7 @@ export default function DonaScreen() {
       return;
     }
     const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.5,
       base64: true,
@@ -167,7 +167,8 @@ export default function DonaScreen() {
 
     try {
       setLoading(true);
-      await api.post('/doni', {
+      tapMedium();
+      const created = await api.post('/doni', {
         titolo: titolo.trim(),
         descrizione: descrizione.trim(),
         categoria,
@@ -175,9 +176,18 @@ export default function DonaScreen() {
         lng: posizione.longitude,
         foto_urls: foto,
       });
-      Alert.alert('Grazie! 🌟', 'Una nuova gioia è pronta a volare verso qualcuno.');
-      router.replace('/home');
+      hapticSuccess();
+      router.replace({
+        pathname: '/dono/created',
+        params: {
+          id: created.data?.id || '',
+          titolo: titolo.trim(),
+          categoria,
+          foto: foto[0] || '',
+        },
+      });
     } catch (e: any) {
+      hapticError();
       Alert.alert('Errore', e?.response?.data?.detail || 'Impossibile pubblicare la gioia.');
     } finally {
       setLoading(false);

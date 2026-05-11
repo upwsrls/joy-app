@@ -1,4 +1,6 @@
 // JOY V3 palette — caldo, gioioso, family-friendly
+import { Platform } from 'react-native';
+
 export const COLORS = {
   primary: '#FF6B6B',         // Corallo vivace (CTA, link, accenti)
   primaryLight: '#FFA5A5',
@@ -35,10 +37,15 @@ export const CATEGORIE = [
   { nome: 'Altro', icon: '🌈' },
 ];
 
-export const SHADOW = {
-  shadowColor: '#FF6B6B',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.12,
-  shadowRadius: 10,
-  elevation: 4,
-};
+// Cross-platform shadow: use boxShadow string on web (RN 0.76+ deprecated shadow* on web),
+// keep legacy shadow* + elevation on native so iOS/Android still get a proper shadow.
+export const SHADOW = Platform.select({
+  web: { boxShadow: '0 4px 10px rgba(255, 107, 107, 0.12)' },
+  default: {
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+}) as any;

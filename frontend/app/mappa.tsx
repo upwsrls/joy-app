@@ -27,7 +27,7 @@ type ViewMode = 'mappa' | 'lista';
 export default function MappaScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const params = useLocalSearchParams<{ q?: string }>();
+  const params = useLocalSearchParams<{ q?: string; focus?: string }>();
 
   const [doni, setDoni] = useState<Dono[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +38,9 @@ export default function MappaScreen() {
     ...EMPTY_FILTERS,
     q: typeof params?.q === 'string' ? params.q : '',
   }));
+
+  const [onlyMine, setOnlyMine] = useState(false);
+  const focusId = typeof params?.focus === 'string' ? params.focus : undefined;
 
   // Default: sempre mappa (web e mobile). Leaflet gestisce il web, react-native-maps il mobile.
   const [viewMode, setViewMode] = useState<ViewMode>('mappa');
@@ -84,9 +87,15 @@ export default function MappaScreen() {
     router.push(`/dono/${dono.id}`);
   };
 
-  const filteredDoni = useMemo(
-    () => applyFilters(doni, posizione, filters),
-    [doni, posizione, filters]
+  const filteredDoni = useMemo(() => {
+    const base = applyFilters(doni, posizione, filters);
+    return onlyMine && user?.id ? base.filter((d) => d.user_id === user.id) : base;
+  }, [doni, posizione, filters, onlyMine, user?.id]);
+
+  // Focused dono: when arriving from /dono/created with ?focus=<id>, center the map there.
+  const focusedDono = useMemo(
+    () => (focusId ? doni.find((d) => d.id === focusId) : undefined),
+    [doni, focusId]
   );
 
   if (loading) {
@@ -102,7 +111,9 @@ export default function MappaScreen() {
   const mieiCount = filteredDoni.length - altrui.length;
   const totalCount = doni.length;
 
-  const initialRegion = posizione
+  const initialRegion = focusedDono
+    ? { latitude: focusedDono.lat, longitude: focusedDono.lng, latitudeDelta: 0.04, longitudeDelta: 0.04 }
+    : posizione
     ? { latitude: posizione.latitude, longitude: posizione.longitude, latitudeDelta: 0.5, longitudeDelta: 0.5 }
     : filteredDoni.length > 0
     ? { latitude: filteredDoni[0].lat, longitude: filteredDoni[0].lng, latitudeDelta: 1, longitudeDelta: 1 }
@@ -199,9 +210,30 @@ export default function MappaScreen() {
       <FiltersBar
         filters={filters}
         onChange={setFilters}
-        onClear={() => setFilters(EMPTY_FILTERS)}
+        onClear={() => {
+          setFilters(EMPTY_FILTERS);
+          setOnlyMine(false);
+        }}
         hasUserPos={!!posizione}
       />
+
+      {/* "Solo le mie" toggle */}
+      <View style={styles.mineRow}>
+        <TouchableOpacity
+          testID="toggle-only-mine"
+          onPress={() => setOnlyMine((v) => !v)}
+          style={[styles.mineChip, onlyMine && styles.mineChipActive]}
+        >
+          <Text style={[styles.mineChipText, onlyMine && styles.mineChipTextActive]}>
+            {onlyMine ? '🌟 Solo le mie · attivo' : '🌟 Solo le mie'}
+          </Text>
+        </TouchableOpacity>
+        {!!focusedDono && (
+          <View style={styles.focusBadge}>
+            <Text style={styles.focusBadgeText}>📍 Gioia evidenziata</Text>
+          </View>
+        )}
+      </View>
 
       {/* Mappa/Lista toggle - visibile su tutte le piattaforme */}
       <View style={styles.toggleRow}>
@@ -270,6 +302,36 @@ const styles = StyleSheet.create({
   },
   toggleText: { color: COLORS.textDark, fontWeight: '700', fontSize: 14 },
   toggleTextActive: { color: COLORS.white },
+  mineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.l,
+    paddingBottom: SPACING.s,
+    gap: 8,
+  },
+  mineChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: COLORS.error,
+    backgroundColor: COLORS.white,
+    minHeight: 36,
+    justifyContent: 'center',
+  },
+  mineChipActive: {
+    backgroundColor: COLORS.error,
+    borderColor: COLORS.error,
+  },
+  mineChipText: { fontSize: 13, color: COLORS.error, fontWeight: '700' },
+  mineChipTextActive: { color: COLORS.white },
+  focusBadge: {
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  focusBadgeText: { fontSize: 12, fontWeight: '800', color: COLORS.textDark },
   list: { flex: 1 },
   empty: { textAlign: 'center', color: COLORS.textDark, marginTop: SPACING.s, fontSize: 16, fontWeight: '600' },
   emptyWrap: { alignItems: 'center', marginTop: SPACING.xl },
