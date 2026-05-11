@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,14 +10,36 @@ import {
   Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
+import { api } from '../lib/api';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../lib/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { profile, signOut, setOnboardingDone } = useAuth();
   const [searchQ, setSearchQ] = useState('');
+  const [unread, setUnread] = useState(0);
+
+  const fetchUnread = useCallback(async () => {
+    try {
+      const r = await api.get<{ messages: number }>('/notifiche/unread-count');
+      setUnread(r.data?.messages || 0);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUnread();
+    }, [fetchUnread])
+  );
+
+  useEffect(() => {
+    const id = setInterval(fetchUnread, 30000);
+    return () => clearInterval(id);
+  }, [fetchUnread]);
 
   const onLogout = async () => {
     await signOut();
