@@ -14,3 +14,5 @@ async def ensure_indexes():
     await db.doni.create_index('ritirato')
     await db.conversazioni.create_index('id', unique=True)
     await db.messaggi.create_index([('conversazione_id', 1), ('created_at', 1)])
+    await db.recensioni.create_index([('dono_id', 1), ('reviewer_id', 1)], unique=True)
+    await db.recensioni.create_index('donor_id')

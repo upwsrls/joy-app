@@ -158,7 +158,22 @@ backend:
         agent: "testing"
         comment: "PASS - POST /api/uploads/image without token -> 401, with empty base64 -> 400, with valid 1x1 PNG base64 -> 200 returning secure_url that starts with https://res.cloudinary.com/drmrh9h7f/ and a public_id under joy/{user_id}/. >12MB payload correctly rejected with 413. End-to-end Cloudinary upload (cloud_name=drmrh9h7f) confirmed working with provided API key/secret."
 
-  - task: "Doni create/list/detail/delete with Cloudinary URLs"
+  - task: "Recensioni + Ritira gioia (V7a)"
+    implemented: true
+    working: true
+    file: "backend/routes/recensioni.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "New routes: POST /api/doni/{id}/ritira marks dono as received by current user; POST /api/recensioni creates a 1-5 stars review (only by ritirer, one per dono); GET /api/users/{id}/rating aggregates {avg,count}; GET /api/users/{id}/recensioni lists reviews with reviewer_nome from profiles."
+      - working: true
+        agent: "testing"
+        comment: "PASS - 28/28 V7a checks via EXPO_PUBLIC_BACKEND_URL/api. Ritira: B ritira A.dono1 -> 200 {ok,dono_id,needs_review:true}; B re-ritira -> 400 'Questa gioia è già stata ritirata'; A ritira own dono -> 400 'Non puoi ritirare una tua gioia'; non-existing id -> 404; missing token -> 401. After ritiro, GET /api/doni excludes dono1 and GET /api/doni/{dono1} returns ritirato=true with ritirato_da=B.id and ritirato_at ISO string. Recensioni: C (non-ritirer) -> 403 'Puoi recensire solo gioie che hai ritirato tu'; B with stars=5 -> 200 returns RecensioneOut with donor_id=A, reviewer_id=B, reviewer_nome='Beatrice Ricciardi', stars=5 (int), commento, created_at; duplicate B review -> 400 'Hai già recensito'; stars=0 -> 422, stars=6 -> 422; missing token -> 401. Rating: after B 5* -> {avg:5.0,count:1}; after D ritira+rates 3* on dono2 -> {avg:4.0,count:2}; non-existing user_id -> {avg:null,count:0} (200, NOT 404). GET /api/users/{A}/recensioni returns both reviews sorted desc with reviewer_nome populated (Beatrice Ricciardi, Davide Sartori). GET /api/doni/{dono2} reflects donatore_rating_avg=4.0, donatore_rating_count=2 and donatore_telefono populated from profile A. No 5xx anywhere."
+
+  - task: "Doni create/list/detail/delete with Cloudinary URLs + V7a enrichment"
     implemented: true
     working: true
     file: "backend/routes/dono.py"
@@ -172,6 +187,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "PASS - Full CRUD validated. POST /api/doni with foto_urls=[<cloudinary secure_url>] -> 200 with returned object enriched with donatore_nome/citta. Empty foto_urls -> 400. GET /api/doni and GET /api/doni/miei both include the new dono, /miei correctly scoped to current user. GET /api/doni/{id} -> 200. DELETE as non-owner (different registered user) -> 403. DELETE as owner -> 200, and the dono is no longer returned in subsequent /api/doni list (ritirato=true filter applied)."
+      - working: true
+        agent: "testing"
+        comment: "PASS V7a enrichment - POST /api/doni now returns the new fields with proper defaults (ritirato_da=None, ritirato_at=None, donatore_telefono populated from profile, donatore_rating_avg=None when no reviews, donatore_rating_count=0). Existing fields (id, titolo, foto_urls, lat/lng, categoria, created_at) all intact. After two reviews on user A (5 stars + 3 stars), GET /api/doni/{dono2_id} correctly reports donatore_rating_avg=4.0 and donatore_rating_count=2, and donatore_telefono='+393331112233' (from profile A). After ritiro by B, GET /api/doni/{dono1_id} returns ritirato=true, ritirato_da=B.id, ritirato_at=ISO timestamp. List endpoint /api/doni correctly excludes ritirato doni."
 
   - task: "Chat conversations and messages 1:1"
     implemented: true
@@ -224,17 +242,56 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Modular server bootstrap (core + routes wiring)"
-    - "Auth (register/login/me + password reset OTP)"
-    - "Profile CRUD with Cloudinary URL field"
-    - "Cloudinary upload endpoint"
-    - "Doni create/list/detail/delete with Cloudinary URLs"
-    - "Chat conversations and messages 1:1"
+    - "Recensioni + Ritira gioia"
+    - "Doni create/list/detail/delete with Cloudinary URLs + ritira"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
+  - agent: "main"
+    message: |
+      V7a backend additions need validation:
+
+      1) DONO model enrichment (regression check):
+         - GET /api/doni and GET /api/doni/{id} responses must now include the new
+           fields: ritirato_da (nullable), ritirato_at (nullable), donatore_telefono,
+           donatore_rating_avg (nullable), donatore_rating_count (int default 0).
+         - Existing fields (id, titolo, foto_urls, etc.) must remain intact.
+         - When no reviews exist for the donor, donatore_rating_avg=null and donatore_rating_count=0.
+
+      2) NEW endpoint POST /api/doni/{id}/ritira (auth required):
+         - Setup: user A creates a dono with foto_urls from Cloudinary.
+         - User B calls POST /api/doni/{A_dono_id}/ritira → 200 with {ok:true, dono_id, needs_review:true}.
+         - Re-call same endpoint as B → 400 (already ritirato).
+         - User A calls POST /api/doni/{A_dono_id}/ritira → 400 (own dono).
+         - Random non-existent id → 404.
+         - GET /api/doni after ritiro → that dono no longer appears (ritirato=true filter).
+         - GET /api/doni/{A_dono_id} as anyone (still allowed if logged in) → response has ritirato=true,
+           ritirato_da=B.id, ritirato_at populated.
+
+      3) NEW endpoint POST /api/recensioni (auth required):
+         Body schema: {dono_id, stars: 1..5, commento?: str}
+         - User C (not the ritirer) → 403 "Puoi recensire solo gioie che hai ritirato tu".
+         - User B (the ritirer) → 200 with returned RecensioneOut (id, donor_id=A.id, reviewer_id=B.id,
+           reviewer_nome, stars, commento, created_at).
+         - Same B re-posts review for same dono → 400 "Hai già recensito".
+         - stars=0 or stars=6 → 422 validation.
+         - Stars must be saved as integer.
+
+      4) NEW endpoint GET /api/users/{A_id}/rating:
+         After a 5-star review by B → returns {avg: 5.0, count: 1}.
+         Add second user D who also ritirates a different dono of A and rates 3 → returns {avg: 4.0, count: 2}.
+         Non-existing user_id → still returns {avg: null, count: 0} (not 404).
+
+      5) GET /api/users/{A_id}/recensioni:
+         Returns the list with reviewer_nome populated (lookup from profiles).
+
+      6) Verify GET /api/doni/{A_id_other_dono} now returns donatore_rating_avg=4.0, donatore_rating_count=2.
+
+      Cloudinary creds still in backend/.env, MongoDB at MONGO_URL. Test user A available
+      (test1@joy.it / test123). Create fresh users B, C, D via /api/auth/register as needed.
+      Update /app/test_result.md with PASS/FAIL per task in the backend section.
   - agent: "main"
     message: |
       V2 backend refactor + Cloudinary wiring complete. Please run a full backend regression:
@@ -269,7 +326,40 @@ agent_communication:
       Backend already restarted and healthy. MongoDB at MONGO_URL in backend/.env.
   - agent: "testing"
     message: |
-      Backend regression COMPLETE for JOY V2. 38/38 backend checks PASS via the public
+      V7a backend validation COMPLETE. 28/28 backend checks PASS via the public
+      EXPO_PUBLIC_BACKEND_URL/api. Test script at /app/backend_test.py.
+
+      Setup: logged in as test1@joy.it (user A, id=8164e399…), upgraded profile to
+      {nome: 'Alessandro Bianchi', citta: 'Roma', telefono: '+393331112233'}.
+      Registered fresh B (Beatrice Ricciardi/Milano), C (Carlo Moretti/Torino),
+      D (Davide Sartori/Napoli) and completed their profiles. Uploaded two real 1x1
+      PNGs via POST /api/uploads/image → Cloudinary secure_urls under drmrh9h7f.
+      Created 2 doni for A at Roma (41.9028, 12.4964) with those Cloudinary URLs.
+
+      Results per scenario:
+      • Dono enrichment: POST/GET /api/doni and /api/doni/{id} now include
+        ritirato_da, ritirato_at, donatore_telefono, donatore_rating_avg,
+        donatore_rating_count. Defaults correct (None/None/tel/None/0).
+      • POST /api/doni/{id}/ritira: A on own dono → 400; non-existing → 404;
+        B on A.dono1 → 200 {ok,dono_id,needs_review:true}; B re-call → 400;
+        missing token → 401. After ritiro, /api/doni excludes dono1; GET
+        /api/doni/{dono1} → ritirato=true, ritirato_da=B.id, ritirato_at set.
+      • POST /api/recensioni: C (non-ritirer) → 403; B with stars=5 → 200 with
+        full RecensioneOut (donor_id=A, reviewer_id=B, reviewer_nome=
+        'Beatrice Ricciardi', stars=5 int, commento, created_at); duplicate B →
+        400; stars=0/6 → 422; missing token → 401.
+      • GET /api/users/{A}/rating: after B 5* → {avg:5.0,count:1}. After D
+        ritira+rates 3 on dono2 → {avg:4.0,count:2}. Non-existing user_id →
+        {avg:null,count:0} returned as 200 (NOT 404).
+      • GET /api/doni/{dono2}: donatore_rating_avg=4.0, donatore_rating_count=2,
+        donatore_telefono='+393331112233'.
+      • GET /api/users/{A}/recensioni: returns both items sorted desc with
+        reviewer_nome populated (Beatrice Ricciardi + Davide Sartori).
+      • Regression: login, /auth/me, /profile/me, /doni list all green.
+      No 5xx anywhere in logs. test_result.md updated.
+  - agent: "testing"
+    message: |
+      [V2 historical] Backend regression COMPLETE for JOY V2. 38/38 backend checks PASS via the public
       EXPO_PUBLIC_BACKEND_URL/api. Test script saved at /app/backend_test.py.
       
       Coverage:

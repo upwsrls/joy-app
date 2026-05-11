@@ -44,9 +44,14 @@ export type Dono = {
   lng: number;
   foto_urls: string[];
   ritirato: boolean;
+  ritirato_da?: string | null;
+  ritirato_at?: string | null;
   created_at: string;
   donatore_nome?: string | null;
   donatore_citta?: string | null;
+  donatore_telefono?: string | null;
+  donatore_rating_avg?: number | null;
+  donatore_rating_count?: number;
 };
 
 export type Conversazione = {

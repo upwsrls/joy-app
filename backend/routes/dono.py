@@ -29,13 +29,33 @@ class DonoOut(BaseModel):
     lng: float
     foto_urls: List[str]
     ritirato: bool
+    ritirato_da: Optional[str] = None
+    ritirato_at: Optional[str] = None
     created_at: str
     donatore_nome: Optional[str] = None
     donatore_citta: Optional[str] = None
+    donatore_telefono: Optional[str] = None
+    donatore_rating_avg: Optional[float] = None
+    donatore_rating_count: int = 0
+
+
+async def _rating(user_id: str) -> dict:
+    pipeline = [
+        {'$match': {'donor_id': user_id}},
+        {'$group': {'_id': '$donor_id', 'avg': {'$avg': '$stars'}, 'count': {'$sum': 1}}},
+    ]
+    res = await db.recensioni.aggregate(pipeline).to_list(1)
+    if not res:
+        return {'avg': None, 'count': 0}
+    return {'avg': round(res[0]['avg'], 1), 'count': res[0]['count']}
 
 
 async def _enrich(dono: dict) -> DonoOut:
-    p = await db.profiles.find_one({'user_id': dono['user_id']}, {'_id': 0, 'nome': 1, 'citta': 1})
+    p = await db.profiles.find_one(
+        {'user_id': dono['user_id']},
+        {'_id': 0, 'nome': 1, 'citta': 1, 'telefono': 1},
+    )
+    rating = await _rating(dono['user_id'])
     # Backward compat with previous schema (foto_base64_list)
     foto = dono.get('foto_urls') or dono.get('foto_base64_list') or []
     return DonoOut(
@@ -48,9 +68,14 @@ async def _enrich(dono: dict) -> DonoOut:
         lng=dono['lng'],
         foto_urls=foto,
         ritirato=dono.get('ritirato', False),
+        ritirato_da=dono.get('ritirato_da'),
+        ritirato_at=dono.get('ritirato_at'),
         created_at=dono['created_at'],
         donatore_nome=(p or {}).get('nome'),
         donatore_citta=(p or {}).get('citta'),
+        donatore_telefono=(p or {}).get('telefono'),
+        donatore_rating_avg=rating['avg'],
+        donatore_rating_count=rating['count'],
     )
 
 

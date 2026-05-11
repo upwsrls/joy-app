@@ -181,6 +181,11 @@ export default function MappaScreen() {
                       : `🙂 ${d.donatore_nome}${d.donatore_citta ? ` · ${d.donatore_citta}` : ''}`}
                   </Text>
                 )}
+                {!isMine && (d.donatore_rating_count ?? 0) > 0 && (
+                  <Text style={styles.donoRating}>
+                    ⭐ {d.donatore_rating_avg?.toFixed(1)} ({d.donatore_rating_count})
+                  </Text>
+                )}
                 {dist !== null && (
                   <Text style={styles.donoDist}>📍 ~{dist.toFixed(1)} km</Text>
                 )}
@@ -357,5 +362,6 @@ const styles = StyleSheet.create({
   donoTitle: { fontSize: 16, fontWeight: '800', color: COLORS.textDark, flex: 1 },
   donoCategoria: { fontSize: 12, color: COLORS.primary, fontWeight: '600', marginTop: 2 },
   donoDonatore: { fontSize: 13, color: COLORS.textMedium, marginTop: 4 },
+  donoRating: { fontSize: 12, color: COLORS.primary, fontWeight: '700', marginTop: 2 },
   donoDist: { fontSize: 12, color: COLORS.textMedium, marginTop: 2 },
 });

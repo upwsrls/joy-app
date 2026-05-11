@@ -24,7 +24,7 @@ export default function NativeMap({ doni, myUserId, initialRegion, onMarkerPress
         <Marker
           key={d.id}
           coordinate={{ latitude: d.lat, longitude: d.lng }}
-          pinColor={d.user_id === myUserId ? 'red' : COLORS.primary}
+          pinColor={d.user_id === myUserId ? 'red' : 'blue'}
           title={d.titolo}
           description={`${d.categoria}${d.donatore_nome ? ` · ${d.donatore_nome}` : ''}`}
           onCalloutPress={() => onMarkerPress(d)}

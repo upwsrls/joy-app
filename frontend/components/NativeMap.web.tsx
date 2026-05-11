@@ -105,11 +105,11 @@ export default function NativeMap({ doni, myUserId, initialRegion, onMarkerPress
   );
 
   const otherIcon = useMemo(
-    () => (bundleRef.current ? makeIcon(bundleRef.current.L, COLORS.primary) : null),
+    () => (bundleRef.current ? makeIcon(bundleRef.current.L, '#3B82F6') : null), // blue
     [ready]
   );
   const myIcon = useMemo(
-    () => (bundleRef.current ? makeIcon(bundleRef.current.L, COLORS.error) : null),
+    () => (bundleRef.current ? makeIcon(bundleRef.current.L, COLORS.error) : null), // red
     [ready]
   );
 
