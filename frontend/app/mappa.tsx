@@ -17,7 +17,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../lib/theme';
 import NativeMap from '../components/NativeMap';
 import FiltersBar from '../components/FiltersBar';
+import EmptyState from '../components/EmptyState';
+import NewBadge from '../components/NewBadge';
 import { applyFilters, EMPTY_FILTERS, Filters, distanceKm } from '../lib/filters';
+import { isRecent } from '../lib/dates';
 
 type ViewMode = 'mappa' | 'lista';
 
@@ -115,20 +118,29 @@ export default function MappaScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       {filteredDoni.length === 0 ? (
-        <View style={styles.emptyWrap}>
-          <Text style={styles.emptyEmoji}>🌱</Text>
-          <Text style={styles.empty}>
-            {totalCount === 0
-              ? 'Nessuna gioia ancora 💙'
-              : 'Nessuna gioia con questi filtri'}
-          </Text>
-          {totalCount > 0 && (
-            <Text style={styles.emptyHint}>Prova a cambiare ricerca, categoria o distanza.</Text>
-          )}
-        </View>
+        totalCount === 0 ? (
+          <EmptyState
+            testID="mappa-empty-noche"
+            emoji="🌱"
+            title="Nessuna gioia ancora"
+            description="Sii il primo a regalare una gioia alla tua comunità! Bastano un titolo, una foto e dove si trova."
+            ctaLabel="Dona una gioia 🎁"
+            onCta={() => router.push('/dona')}
+          />
+        ) : (
+          <EmptyState
+            testID="mappa-empty-filtered"
+            emoji="🔎"
+            title="Nessuna gioia con questi filtri"
+            description="Prova a cambiare ricerca, categoria o distanza."
+            ctaLabel="Pulisci filtri 🧹"
+            onCta={() => setFilters(EMPTY_FILTERS)}
+          />
+        )
       ) : (
         filteredDoni.map((d) => {
           const isMine = d.user_id === user?.id;
+          const isNew = isRecent(d.created_at, 48);
           const dist =
             posizione && d.lat && d.lng
               ? distanceKm(posizione.latitude, posizione.longitude, d.lat, d.lng)
@@ -146,7 +158,10 @@ export default function MappaScreen() {
                 <View style={[styles.donoImg, { backgroundColor: COLORS.lightGray }]} />
               )}
               <View style={{ flex: 1, padding: SPACING.m }}>
-                <Text style={styles.donoTitle}>{d.titolo}</Text>
+                <View style={styles.donoHeaderRow}>
+                  <Text style={styles.donoTitle} numberOfLines={1}>{d.titolo}</Text>
+                  {isNew && !isMine && <NewBadge />}
+                </View>
                 <Text style={styles.donoCategoria}>{d.categoria}</Text>
                 {!!d.donatore_nome && (
                   <Text style={styles.donoDonatore}>
@@ -271,7 +286,13 @@ const styles = StyleSheet.create({
     ...SHADOW,
   },
   donoImg: { width: 100, height: 100 },
-  donoTitle: { fontSize: 16, fontWeight: '800', color: COLORS.textDark },
+  donoHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  donoTitle: { fontSize: 16, fontWeight: '800', color: COLORS.textDark, flex: 1 },
   donoCategoria: { fontSize: 12, color: COLORS.primary, fontWeight: '600', marginTop: 2 },
   donoDonatore: { fontSize: 13, color: COLORS.textMedium, marginTop: 4 },
   donoDist: { fontSize: 12, color: COLORS.textMedium, marginTop: 2 },

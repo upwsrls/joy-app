@@ -48,10 +48,13 @@ export default function DettaglioDonoScreen() {
           onPress: async () => {
             try {
               setBusy(true);
+              tapMedium();
               await api.delete(`/doni/${params.id}`);
+              hapticSuccess();
               Alert.alert('Eliminata ✨', 'La gioia è stata rimossa dalla mappa.');
               router.back();
             } catch {
+              hapticError();
               Alert.alert('Errore', 'Impossibile eliminare la gioia.');
             } finally {
               setBusy(false);
@@ -66,12 +69,14 @@ export default function DettaglioDonoScreen() {
     if (!dono) return;
     try {
       setBusy(true);
+      tapMedium();
       const res = await api.post(`/conversazioni/start/${dono.user_id}`);
       router.push({
         pathname: '/chat/[id]',
         params: { id: res.data.id, nome: dono.donatore_nome || 'Donatore' },
       });
     } catch (e: any) {
+      hapticError();
       Alert.alert('Errore', e?.response?.data?.detail || 'Impossibile avviare la chat');
     } finally {
       setBusy(false);

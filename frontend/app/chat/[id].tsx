@@ -52,6 +52,7 @@ export default function ChatPrivataScreen() {
     if (!testo.trim()) return;
     const t = testo.trim();
     setTesto('');
+    tapLight();
     try {
       setSending(true);
       const res = await api.post<Messaggio>(`/conversazioni/${convId}/messaggi`, { testo: t });

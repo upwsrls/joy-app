@@ -20,6 +20,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { api } from '../lib/api';
 import { COLORS, SPACING, RADIUS, SHADOW, CATEGORIE } from '../lib/theme';
+import { success as hapticSuccess, tapMedium, error as hapticError } from '../lib/haptic';
+import UploadOverlay from '../components/UploadOverlay';
 
 type CityRes = {
   place_id: number;
@@ -108,7 +110,9 @@ export default function DonaScreen() {
         const dataUrl = `data:image/jpeg;base64,${res.assets[0].base64}`;
         const up = await api.post('/uploads/image', { base64: dataUrl });
         setFoto((prev) => [...prev, up.data.secure_url].slice(0, 3));
+        hapticSuccess();
       } catch {
+        hapticError();
         Alert.alert('Errore', 'Upload foto fallito. Riprova.');
       } finally {
         setUploadingPhoto(false);
@@ -316,9 +320,10 @@ export default function DonaScreen() {
         </View>
       </Modal>
 
+      <UploadOverlay visible={uploadingPhoto} message="Caricamento foto…" emoji="☁️" />
+
       {/* City search modal */}
-      <Modal visible={cityModalVisible} animationType="slide" onRequestClose={() => setCityModalVisible(false)}>
-        <SafeAreaView style={styles.cityModalSafe}>
+      <Modal visible={cityModalVisible} animationType="slide" onRequestClose={() => setCityModalVisible(false)}>        <SafeAreaView style={styles.cityModalSafe}>
           <View style={styles.cityModalHeader}>
             <TouchableOpacity testID="city-modal-close" onPress={() => setCityModalVisible(false)}>
               <Text style={styles.backText}>✕ Chiudi</Text>

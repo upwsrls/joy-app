@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { api, Conversazione } from '../lib/api';
 import { COLORS, SPACING, RADIUS, SHADOW } from '../lib/theme';
+import EmptyState from '../components/EmptyState';
 
 export default function ChatListScreen() {
   const router = useRouter();
@@ -67,13 +68,14 @@ export default function ChatListScreen() {
       </View>
 
       {convs.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>💬</Text>
-          <Text style={styles.emptyTitle}>Le tue chat sono vuote</Text>
-          <Text style={styles.emptyText}>
-            Inizia una conversazione toccando una gioia sulla mappa!
-          </Text>
-        </View>
+        <EmptyState
+          testID="chat-list-empty"
+          emoji="💬"
+          title="Le tue chat sono vuote"
+          description="Inizia una conversazione toccando una gioia sulla mappa e contattando il donatore."
+          ctaLabel="Vai alla mappa 🗺️"
+          onCta={() => router.push('/mappa')}
+        />
       ) : (
         <FlatList
           data={convs}
