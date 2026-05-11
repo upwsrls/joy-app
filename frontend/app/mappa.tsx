@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   ScrollView,
   Image,
-  Platform,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,8 +36,8 @@ export default function MappaScreen() {
     q: typeof params?.q === 'string' ? params.q : '',
   }));
 
-  // Web defaults to "lista" because there is no native map; mobile defaults to "mappa".
-  const [viewMode, setViewMode] = useState<ViewMode>(Platform.OS === 'web' ? 'lista' : 'mappa');
+  // Default: sempre mappa (web e mobile). Leaflet gestisce il web, react-native-maps il mobile.
+  const [viewMode, setViewMode] = useState<ViewMode>('mappa');
 
   const carica = useCallback(async () => {
     try {
@@ -189,31 +188,29 @@ export default function MappaScreen() {
         hasUserPos={!!posizione}
       />
 
-      {/* Mappa/Lista toggle (solo su mobile, su web la lista è l'unico modo) */}
-      {Platform.OS !== 'web' && (
-        <View style={styles.toggleRow}>
-          <TouchableOpacity
-            testID="toggle-mappa"
-            style={[styles.toggleBtn, viewMode === 'mappa' && styles.toggleActive]}
-            onPress={() => setViewMode('mappa')}
-          >
-            <Text style={[styles.toggleText, viewMode === 'mappa' && styles.toggleTextActive]}>
-              🗺️ Mappa
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="toggle-lista"
-            style={[styles.toggleBtn, viewMode === 'lista' && styles.toggleActive]}
-            onPress={() => setViewMode('lista')}
-          >
-            <Text style={[styles.toggleText, viewMode === 'lista' && styles.toggleTextActive]}>
-              📋 Lista
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Mappa/Lista toggle - visibile su tutte le piattaforme */}
+      <View style={styles.toggleRow}>
+        <TouchableOpacity
+          testID="toggle-mappa"
+          style={[styles.toggleBtn, viewMode === 'mappa' && styles.toggleActive]}
+          onPress={() => setViewMode('mappa')}
+        >
+          <Text style={[styles.toggleText, viewMode === 'mappa' && styles.toggleTextActive]}>
+            📍 Mappa
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          testID="toggle-lista"
+          style={[styles.toggleBtn, viewMode === 'lista' && styles.toggleActive]}
+          onPress={() => setViewMode('lista')}
+        >
+          <Text style={[styles.toggleText, viewMode === 'lista' && styles.toggleTextActive]}>
+            📋 Lista
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-      {Platform.OS === 'web' || viewMode === 'lista' ? (
+      {viewMode === 'lista' ? (
         renderLista()
       ) : (
         <NativeMap
