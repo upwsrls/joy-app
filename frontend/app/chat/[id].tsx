@@ -16,6 +16,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { api, Messaggio } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS, SPACING, RADIUS } from '../../lib/theme';
+import { tapLight } from '../../lib/haptic';
 
 export default function ChatPrivataScreen() {
   const params = useLocalSearchParams<{ id: string; nome?: string }>();
