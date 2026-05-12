@@ -1,14 +1,27 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+// Production backend URL hardcoded as fallback so EAS dev/preview builds work
+// even if .env is missing on the build machine (the file is gitignored).
+// You can still override via EXPO_PUBLIC_BACKEND_URL in your local .env.
+const DEFAULT_BACKEND_URL = 'https://mood-tracker-619.preview.emergentagent.com';
+const BASE_URL =
+  (process.env.EXPO_PUBLIC_BACKEND_URL && process.env.EXPO_PUBLIC_BACKEND_URL.trim()) ||
+  DEFAULT_BACKEND_URL;
 
+export const API_BASE = `${BASE_URL.replace(/\/+$/, '')}/api`;
 export const TOKEN_KEY = 'joy_token';
 
 export const api = axios.create({
-  baseURL: `${BASE_URL}/api`,
+  baseURL: API_BASE,
   timeout: 30000,
 });
+
+if (__DEV__) {
+  // Helpful one-shot log on app start so you can confirm which backend the build talks to.
+  // eslint-disable-next-line no-console
+  console.log('[JOY] API base URL:', API_BASE);
+}
 
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem(TOKEN_KEY);
