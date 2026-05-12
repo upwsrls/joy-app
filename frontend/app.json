@@ -21,7 +21,7 @@
       "package": "com.joyapp.giftapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#D9ECFF"
+        "backgroundColor": "#FF6B6B"
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
@@ -43,9 +43,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "imageWidth": 280,
           "resizeMode": "contain",
-          "backgroundColor": "#D9ECFF"
+          "backgroundColor": "#FFF8F0"
         }
       ],
       [
