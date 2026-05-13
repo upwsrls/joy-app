@@ -36,6 +36,7 @@ export default function DonaScreen() {
   // Form state — preserved across modal openings
   const [foto, setFoto] = useState<string[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [titolo, setTitolo] = useState('');
   const [descrizione, setDescrizione] = useState('');
   const [categoria, setCategoria] = useState<string>('');
@@ -98,25 +99,56 @@ export default function DonaScreen() {
       Alert.alert('Permesso negato', 'Servono i permessi per la galleria.');
       return;
     }
+    // Multi-selection: user can pick up to `remaining` photos at once.
+    // Note: `allowsEditing` is incompatible with multi-selection, so we skip it.
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 0.5,
+      allowsMultipleSelection: true,
+      selectionLimit: remaining,
+      orderedSelection: true,
+      quality: 0.6,
       base64: true,
     });
-    if (!res.canceled && res.assets[0]?.base64) {
+    if (res.canceled || !res.assets || res.assets.length === 0) return;
+
+    // Defensive trim — iOS/Android occasionally return more than selectionLimit.
+    const assets = res.assets.slice(0, remaining);
+
+    setUploadingPhoto(true);
+    setUploadProgress({ current: 0, total: assets.length });
+    const newUrls: string[] = [];
+
+    for (let i = 0; i < assets.length; i++) {
+      setUploadProgress({ current: i + 1, total: assets.length });
+      const asset = assets[i];
+      if (!asset.base64) continue;
       try {
-        setUploadingPhoto(true);
-        const dataUrl = `data:image/jpeg;base64,${res.assets[0].base64}`;
+        const dataUrl = `data:image/jpeg;base64,${asset.base64}`;
         const up = await api.post('/uploads/image', { base64: dataUrl });
-        setFoto((prev) => [...prev, up.data.secure_url].slice(0, 3));
-        hapticSuccess();
-      } catch {
-        hapticError();
-        Alert.alert('Errore', 'Upload foto fallito. Riprova.');
-      } finally {
-        setUploadingPhoto(false);
+        newUrls.push(up.data.secure_url);
+      } catch (e) {
+        console.warn('Photo upload failed:', e);
       }
+    }
+
+    setUploadingPhoto(false);
+    setUploadProgress(null);
+
+    if (newUrls.length === 0) {
+      hapticError();
+      Alert.alert('Errore', 'Caricamento foto fallito. Riprova.');
+      return;
+    }
+
+    setFoto((prev) => [...prev, ...newUrls].slice(0, 3));
+    hapticSuccess();
+
+    if (newUrls.length < assets.length) {
+      // Partial failure — let the user know quietly
+      Alert.alert(
+        'Alcune foto non caricate',
+        `${newUrls.length} di ${assets.length} foto caricate correttamente. Riprova per le altre.`,
+      );
     }
   };
 
@@ -210,11 +242,17 @@ export default function DonaScreen() {
               <Text style={styles.sectionTitle}>Foto colorate 📸</Text>
               <Text style={styles.sectionHint}>Max 3 immagini</Text>
             </View>
-            <TouchableOpacity testID="dona-add-photo" style={styles.secondaryButton} onPress={aggiungiFoto} disabled={uploadingPhoto}>
+            <TouchableOpacity testID="dona-add-photo" style={styles.secondaryButton} onPress={aggiungiFoto} disabled={uploadingPhoto || foto.length >= 3}>
               {uploadingPhoto ? (
                 <ActivityIndicator color={COLORS.primary} />
               ) : (
-                <Text style={styles.secondaryButtonText}>📷 Aggiungi foto ({foto.length}/3)</Text>
+                <Text style={styles.secondaryButtonText}>
+                  {foto.length === 0
+                    ? '📷 Scegli foto (puoi selezionarne fino a 3)'
+                    : foto.length >= 3
+                      ? '✅ Hai aggiunto 3 foto'
+                      : `📷 Aggiungi altre foto (${foto.length}/3)`}
+                </Text>
               )}
             </TouchableOpacity>
             <View style={styles.fotoRow}>
@@ -330,7 +368,15 @@ export default function DonaScreen() {
         </View>
       </Modal>
 
-      <UploadOverlay visible={uploadingPhoto} message="Caricamento foto…" emoji="☁️" />
+      <UploadOverlay
+        visible={uploadingPhoto}
+        message={
+          uploadProgress
+            ? `Caricamento foto ${uploadProgress.current}/${uploadProgress.total}…`
+            : 'Caricamento foto…'
+        }
+        emoji="☁️"
+      />
 
       {/* City search modal */}
       <Modal visible={cityModalVisible} animationType="slide" onRequestClose={() => setCityModalVisible(false)}>        <SafeAreaView style={styles.cityModalSafe}>
