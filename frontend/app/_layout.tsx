@@ -1,11 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider } from '../contexts/AuthContext';
 import { COLORS } from '../lib/theme';
 import { onNotificationTap } from '../lib/notifications';
+import AnimatedSplash from '../components/AnimatedSplash';
+
+// Keep the native splash visible until our animated splash takes over.
+// Wrapped in try/catch because on web (and a 2nd init) it may already be hidden.
+try {
+  SplashScreen.preventAutoHideAsync();
+} catch {
+  // already hidden / unavailable on web — safe to ignore
+}
 
 function NotificationRouter() {
   const router = useRouter();
@@ -24,6 +34,20 @@ function NotificationRouter() {
 }
 
 export default function RootLayout() {
+  const [splashDone, setSplashDone] = useState(false);
+
+  // Hide native splash as soon as JS is up — our React Native splash takes over.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 30);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleSplashFinish = useCallback(() => {
+    setSplashDone(true);
+  }, []);
+
   return (
     <SafeAreaProvider>
       <AuthProvider>
@@ -37,6 +61,7 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: COLORS.background },
           }}
         />
+        {!splashDone && <AnimatedSplash onFinish={handleSplashFinish} />}
       </AuthProvider>
     </SafeAreaProvider>
   );

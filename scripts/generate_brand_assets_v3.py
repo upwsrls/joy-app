@@ -248,28 +248,29 @@ def make_icon(size=1024, safe_zone=False):
 
 
 def make_splash(size=2048):
-    """Splash with cream background, big coral heart, JOY wordmark + tagline."""
-    img = Image.new('RGBA', (size, size), CREAM + (255,))
+    """Splash with coral→cream vertical gradient, big YELLOW heart, JOY wordmark + tagline."""
+    # Gradient background: warm coral on top → cream at bottom
+    img = vertical_gradient((size, size), CORAL_TOP, CREAM)
 
     cx = size // 2
-    cy = int(size * 0.42)
-    heart_scale = size * 0.40
+    cy = int(size * 0.40)
+    heart_scale = size * 0.38
 
-    # Soft coral glow behind the heart
+    # Soft yellow glow behind the heart
     glow = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
-    gr = int(heart_scale * 0.85)
+    gr = int(heart_scale * 0.90)
     gd.ellipse((cx - gr, cy - gr, cx + gr, cy + gr),
-               fill=(CORAL_TOP[0], CORAL_TOP[1], CORAL_TOP[2], 45))
+               fill=(YELLOW_SOFT[0], YELLOW_SOFT[1], YELLOW_SOFT[2], 90))
     glow = glow.filter(ImageFilter.GaussianBlur(size * 0.05))
     img.alpha_composite(glow)
 
-    # Coral heart hero
-    draw_smooth_heart(img, cx, cy, heart_scale, CORAL_MID,
+    # Yellow heart hero
+    draw_smooth_heart(img, cx, cy, heart_scale, YELLOW,
                       shadow=True, inner_highlight=True, sparkle=True)
 
     # JOY wordmark below heart
-    font_size = int(size * 0.16)
+    font_size = int(size * 0.17)
     font = load_font(font_size, bold=True)
     text = 'JOY'
     d = ImageDraw.Draw(img)
@@ -281,45 +282,46 @@ def make_splash(size=2048):
     # Soft drop shadow on wordmark
     sh = Image.new('RGBA', img.size, (0, 0, 0, 0))
     sd = ImageDraw.Draw(sh)
-    sd.text((tx + 4, ty + 8), text, fill=(0, 0, 0, 50), font=font)
-    sh = sh.filter(ImageFilter.GaussianBlur(8))
+    sd.text((tx + 4, ty + 9), text, fill=(120, 30, 50, 60), font=font)
+    sh = sh.filter(ImageFilter.GaussianBlur(10))
     img.alpha_composite(sh)
-    d.text((tx, ty), text, fill=CORAL_DEEP, font=font)
+    d.text((tx, ty), text, fill=WHITE, font=font)
 
     # Tagline
-    tag_font = load_font(int(size * 0.038), bold=False)
+    tag_font = load_font(int(size * 0.040), bold=True)
     tagline = 'Risvegliamo il bene'
     tbbox = d.textbbox((0, 0), tagline, font=tag_font)
     ttw = tbbox[2] - tbbox[0]
     ttx = cx - ttw // 2 - tbbox[0]
-    tty = ty + th + int(size * 0.02)
+    tty = ty + th + int(size * 0.025)
     d.text((ttx, tty), tagline,
-           fill=(CORAL_DEEP[0], CORAL_DEEP[1], CORAL_DEEP[2], 220),
+           fill=(CORAL_DEEP[0], CORAL_DEEP[1], CORAL_DEEP[2], 230),
            font=tag_font)
 
     return img
 
 
 def make_splash_icon(size=2048):
-    """Splash icon = same as splash but transparent background (used by
-    expo-splash-screen which paints its own backgroundColor)."""
+    """Splash icon shown by expo-splash-screen plugin. Transparent bg (Expo
+    paints its own backgroundColor) — we keep heart + wordmark + tagline so
+    the static splash matches the start of the animated overlay."""
     img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     cx = size // 2
-    cy = int(size * 0.42)
-    heart_scale = size * 0.40
+    cy = int(size * 0.40)
+    heart_scale = size * 0.38
 
     glow = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
-    gr = int(heart_scale * 0.85)
+    gr = int(heart_scale * 0.90)
     gd.ellipse((cx - gr, cy - gr, cx + gr, cy + gr),
-               fill=(CORAL_TOP[0], CORAL_TOP[1], CORAL_TOP[2], 60))
+               fill=(YELLOW_SOFT[0], YELLOW_SOFT[1], YELLOW_SOFT[2], 110))
     glow = glow.filter(ImageFilter.GaussianBlur(size * 0.05))
     img.alpha_composite(glow)
 
-    draw_smooth_heart(img, cx, cy, heart_scale, CORAL_MID,
+    draw_smooth_heart(img, cx, cy, heart_scale, YELLOW,
                       shadow=True, inner_highlight=True, sparkle=True)
 
-    font_size = int(size * 0.16)
+    font_size = int(size * 0.17)
     font = load_font(font_size, bold=True)
     text = 'JOY'
     d = ImageDraw.Draw(img)
@@ -329,14 +331,14 @@ def make_splash_icon(size=2048):
     ty = cy + int(heart_scale * 0.55) - bbox[1]
     d.text((tx, ty), text, fill=CORAL_DEEP, font=font)
 
-    tag_font = load_font(int(size * 0.038), bold=False)
+    tag_font = load_font(int(size * 0.040), bold=True)
     tagline = 'Risvegliamo il bene'
     tbbox = d.textbbox((0, 0), tagline, font=tag_font)
     ttw = tbbox[2] - tbbox[0]
     ttx = cx - ttw // 2 - tbbox[0]
-    tty = ty + th + int(size * 0.02)
+    tty = ty + th + int(size * 0.025)
     d.text((ttx, tty), tagline,
-           fill=(CORAL_DEEP[0], CORAL_DEEP[1], CORAL_DEEP[2], 220),
+           fill=(CORAL_DEEP[0], CORAL_DEEP[1], CORAL_DEEP[2], 230),
            font=tag_font)
 
     return img
@@ -351,6 +353,28 @@ def save(img, path, size=None):
     print(f'  ✓ {path} ({img.size[0]}x{img.size[1]}, {os.path.getsize(path) // 1024} KB)')
 
 
+def make_heart_only(size=1024):
+    """Yellow heart on transparent background — used by the React Native
+    animated splash overlay so we can animate it freely. Glow is kept small
+    so the PNG bounds never show against the gradient background."""
+    img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    cx, cy = size // 2, size // 2
+    heart_scale = size * 0.72  # leave breathing room around the heart
+
+    # Very subtle yellow glow — stays well inside the canvas
+    glow = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow)
+    gr = int(heart_scale * 0.55)
+    gd.ellipse((cx - gr, cy - gr, cx + gr, cy + gr),
+               fill=(YELLOW_SOFT[0], YELLOW_SOFT[1], YELLOW_SOFT[2], 70))
+    glow = glow.filter(ImageFilter.GaussianBlur(size * 0.06))
+    img.alpha_composite(glow)
+
+    draw_smooth_heart(img, cx, cy, heart_scale, YELLOW,
+                      shadow=True, inner_highlight=True, sparkle=False)
+    return img
+
+
 if __name__ == '__main__':
     os.makedirs(OUT_DIR, exist_ok=True)
     os.makedirs(LEGACY_DIR, exist_ok=True)
@@ -361,6 +385,7 @@ if __name__ == '__main__':
     splash_icon = make_splash_icon(2048)
     splash_full = make_splash(2048)
     favicon_img = make_icon(512, safe_zone=False)
+    heart_only_img = make_heart_only(1024)
 
     # Active paths used by app.json
     save(icon, f'{OUT_DIR}/icon.png')
@@ -368,6 +393,7 @@ if __name__ == '__main__':
     save(splash_icon, f'{OUT_DIR}/splash-icon.png')
     save(splash_full, f'{OUT_DIR}/splash-image.png')
     save(favicon_img, f'{OUT_DIR}/favicon.png')
+    save(heart_only_img, f'{OUT_DIR}/heart-only.png')
 
     # Legacy copies (kept for any reference / future use)
     save(icon, f'{LEGACY_DIR}/icon.png')
