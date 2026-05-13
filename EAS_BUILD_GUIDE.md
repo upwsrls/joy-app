@@ -114,3 +114,20 @@ keys da gestire — Expo si occupa del routing).
 - [ ] `expo-notifications` + `expo-device` installati (già fatto ✓)
 
 Tutto pronto! 🚀
+
+---
+
+## 🎨 Brand Assets v3 (aggiornate)
+
+Le seguenti asset sono state rigenerate (cuore stilizzato, gradient corallo, splash crema):
+
+- `frontend/assets/images/icon.png` — icona principale (iOS)
+- `frontend/assets/images/adaptive-icon.png` — icona Android (safe-zone)
+- `frontend/assets/images/splash-icon.png` — splash (transparent bg)
+- `frontend/assets/images/splash-image.png` — splash con bg crema
+- `frontend/assets/images/favicon.png` — favicon web
+
+> Lo script per rigenerarle (con eventuali tweak di colore) è in
+> `scripts/generate_brand_assets_v3.py`.
+
+Dopo aver fatto pull del repo aggiornato, **rifai il build EAS** (`eas build --profile development --platform ios`) per vedere la nuova icona e splash screen sul dispositivo.
