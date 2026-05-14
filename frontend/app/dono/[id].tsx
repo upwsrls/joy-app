@@ -216,7 +216,7 @@ export default function DettaglioDonoScreen() {
         <Text style={styles.title}>{dono.titolo}</Text>
         <Text style={styles.categoria}>{dono.categoria}</Text>
 
-        {/* Foto carousel */}
+        {/* Foto carousel — tappable to open fullscreen viewer */}
         {dono.foto_urls && dono.foto_urls.length > 0 && (
           <ScrollView
             horizontal
@@ -225,12 +225,27 @@ export default function DettaglioDonoScreen() {
             contentContainerStyle={{ paddingRight: SPACING.m }}
           >
             {dono.foto_urls.map((url, i) => (
-              <Image
+              <TouchableOpacity
                 key={i}
-                source={{ uri: url }}
-                style={styles.foto}
+                activeOpacity={0.85}
                 testID={`dono-foto-${i}`}
-              />
+                onPress={() => {
+                  setViewerIndex(i);
+                  setViewerOpen(true);
+                }}
+                style={{ position: 'relative' }}
+              >
+                <Image source={{ uri: url }} style={styles.foto} />
+                {i === 0 && (
+                  <View pointerEvents="none" style={styles.zoomHint}>
+                    <Text style={styles.zoomHintText}>
+                      {dono.foto_urls.length > 1
+                        ? '\ud83d\udd0d Tocca per ingrandire'
+                        : '\ud83d\udd0d Ingrandisci'}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             ))}
           </ScrollView>
         )}
