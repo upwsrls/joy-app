@@ -414,7 +414,8 @@ export default function DonaScreen() {
       />
 
       {/* City search modal */}
-      <Modal visible={cityModalVisible} animationType="slide" onRequestClose={() => setCityModalVisible(false)}>        <SafeAreaView style={styles.cityModalSafe}>
+      <Modal visible={cityModalVisible} animationType="slide" onRequestClose={() => setCityModalVisible(false)}>
+        <SafeAreaView style={styles.cityModalSafe}>
           <View style={styles.cityModalHeader}>
             <TouchableOpacity testID="city-modal-close" onPress={() => setCityModalVisible(false)}>
               <Text style={styles.backText}>✕ Chiudi</Text>
