@@ -100,14 +100,16 @@ export default function DonaScreen() {
       return;
     }
     // Multi-selection: user can pick up to `remaining` photos at once.
-    // Note: `allowsEditing` is incompatible with multi-selection, so we skip it.
+    // ⚠️ IMPORTANT: on iOS PHPicker, when allowsMultipleSelection is true,
+    // `base64` is NOT returned by the picker (it's undefined). We therefore
+    // fetch each URI ourselves below and convert to base64 manually.
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsMultipleSelection: true,
       selectionLimit: remaining,
       orderedSelection: true,
       quality: 0.6,
-      base64: true,
+      // We do NOT pass base64: true — it's unreliable with multi-selection on iOS.
     });
     if (res.canceled || !res.assets || res.assets.length === 0) return;
 
@@ -121,9 +123,18 @@ export default function DonaScreen() {
     for (let i = 0; i < assets.length; i++) {
       setUploadProgress({ current: i + 1, total: assets.length });
       const asset = assets[i];
-      if (!asset.base64) continue;
       try {
-        const dataUrl = `data:image/jpeg;base64,${asset.base64}`;
+        // Prefer base64 if the picker happened to return it (single-select fallback),
+        // otherwise read the file from its URI and convert to base64 in JS.
+        let b64: string | null = asset.base64 ?? null;
+        if (!b64 && asset.uri) {
+          b64 = await uriToBase64(asset.uri);
+        }
+        if (!b64) {
+          console.warn('Skipping asset: no base64 nor URI available', asset);
+          continue;
+        }
+        const dataUrl = `data:image/jpeg;base64,${b64}`;
         const up = await api.post('/uploads/image', { base64: dataUrl });
         newUrls.push(up.data.secure_url);
       } catch (e) {
@@ -144,13 +155,37 @@ export default function DonaScreen() {
     hapticSuccess();
 
     if (newUrls.length < assets.length) {
-      // Partial failure — let the user know quietly
       Alert.alert(
         'Alcune foto non caricate',
         `${newUrls.length} di ${assets.length} foto caricate correttamente. Riprova per le altre.`,
       );
     }
   };
+
+  /**
+   * Read a local file URI (file://, content://, ph://) and return its base64
+   * payload. Used as a fallback when the image picker doesn't return base64
+   * (e.g. iOS PHPicker with allowsMultipleSelection: true).
+   */
+  const uriToBase64 = (uri: string): Promise<string> =>
+    new Promise(async (resolve, reject) => {
+      try {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onerror = () => reject(reader.error ?? new Error('FileReader error'));
+        reader.onloadend = () => {
+          const result = reader.result as string | null;
+          if (!result) return reject(new Error('Empty FileReader result'));
+          // result is "data:<mime>;base64,XXXX" — strip the prefix
+          const comma = result.indexOf(',');
+          resolve(comma >= 0 ? result.slice(comma + 1) : result);
+        };
+        reader.readAsDataURL(blob);
+      } catch (e) {
+        reject(e);
+      }
+    });
 
   const rimuoviFoto = (i: number) => setFoto(foto.filter((_, idx) => idx !== i));
 
