@@ -11,7 +11,7 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "githubUrl": "https://github.com/joyapp/joy",
-    "owner": "joyapp",
+    "owner": "mrseg",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.joyapp.giftapp",
