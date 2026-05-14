@@ -257,11 +257,20 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Push token register/clear + notifiche unread-count (V7b)"
-    - "Chat conversations and messages 1:1"
-  stuck_tasks: []
+    - "STEP1: Moderation routes (segnalazioni + blocks) - router not registered"
+    - "STEP1: DELETE /api/auth/me"
+    - "STEP1: Block-symmetric filter on GET /api/doni"
+  stuck_tasks:
+    - "STEP1: Moderation routes (segnalazioni + blocks) - router not registered"
   test_all: false
   test_priority: "high_first"
+
+# ---- STEP 1 backend tasks ----
+# (appended by testing agent — yaml-only fragment, keep alongside the original 'backend:' list)
+# Task: DELETE /api/auth/me  -> implemented:true, working:true (with caveat: full block-cleanup verification couldn't be done because /api/blocks is 404).
+# Task: POST /api/segnalazioni  -> implemented:true (code present in routes/moderation.py), working:false at runtime — endpoint returns 404 because moderation_router is NOT included in server.py.
+# Task: POST/DELETE/GET /api/blocks  -> implemented:true (code present), working:false at runtime — same root cause: router not registered.
+# Task: Block-symmetric filter on GET /api/doni  -> code is correctly wired in routes/dono.py (uses blocked_ids_for), but cannot be exercised because /api/blocks/{id} returns 404 (can't create the block to test the filter). The filter logic itself is correct on a code-read basis.
 
 agent_communication:
   - agent: "main"
@@ -430,3 +439,121 @@ agent_communication:
       Optional fix: pin bcrypt<4.1 or upgrade passlib.
       
       No blockers. All current_focus tasks marked working=true, needs_retesting=false.
+
+
+#====================================================================================================
+# STEP 1 (Apple App Store compliance) - NEW endpoints to test
+#====================================================================================================
+# NEW BACKEND TASKS - require testing:
+#
+# Task A: DELETE /api/auth/me — Delete account (Apple Guideline 5.1.1)
+#   - File: backend/routes/auth.py
+#   - Authenticated. Anonymizes user (email -> deleted-XXXX@joy.local, password_hash -> "!deleted",
+#     deleted: true), removes profile, marks all their active doni as ritirato, removes their
+#     password_resets / letture, removes all blocks involving them. Returns {ok: true}.
+#   - Verify: after DELETE, the same user cannot login with old credentials; profile is gone;
+#     their doni no longer appear in GET /api/doni; the JWT becomes effectively useless.
+#
+# Task B: POST /api/segnalazioni — Report content
+#   - File: backend/routes/moderation.py
+#   - Authenticated. Body: { target_type: 'dono'|'utente'|'recensione'|'messaggio',
+#     target_id: str, reason: 'spam'|'contenuto_offensivo'|'truffa'|'inappropriato'|'minorenne'|'altro',
+#     note?: str (max 500) }.
+#   - Anti-spam: same reporter + same target returns the existing report (idempotent).
+#   - Invalid reason -> 400.
+#   - Returns SegnalazioneOut (id, target_type, target_id, reason, status='pending', created_at).
+#
+# Task C: POST /api/blocks/{user_id} — Block a user
+#   - File: backend/routes/moderation.py
+#   - Authenticated. Cannot block self (-> 400). Unknown user_id -> 404.
+#   - Idempotent: re-blocking same user is OK (upsert).
+#
+# Task D: DELETE /api/blocks/{user_id} — Unblock
+#   - Authenticated. Always returns {ok: true, unblocked_id}.
+#
+# Task E: GET /api/blocks — List blocked users
+#   - Returns list of { user_id, nome?, citta?, blocked_at }.
+#
+# Task F: Filter blocked content from GET /api/doni
+#   - File: backend/routes/dono.py (lista_doni now uses blocked_ids_for)
+#   - Doni from users blocked-by OR blocking the requester must NOT appear in the list.
+#
+# REGRESSION: ensure existing auth/profile/doni/chat/recensioni endpoints still 200.
+
+agent_communication:
+  - agent: "main"
+    message: |
+      STEP 1 of pre-launch (Apple App Store compliance) implemented. Please run a backend
+      regression that includes the NEW endpoints listed in the section above:
+        1) DELETE /api/auth/me  → account deletion + side effects
+        2) POST   /api/segnalazioni  → report content (idempotency + 400 on bad reason)
+        3) POST   /api/blocks/{user_id} + DELETE /api/blocks/{user_id} + GET /api/blocks
+        4) Filtering: GET /api/doni excludes doni from blocked / blocking users (symmetric)
+      Plus a quick smoke-test of existing flows (auth, profile, doni create+list, chat start,
+      recensioni list) to confirm no regression introduced by routes/moderation.py and the
+      changes in routes/auth.py + routes/dono.py + core/database.py (new indexes).
+
+      Test users: see /app/memory/test_credentials.md (test1@joy.it / test123 etc).
+      Create fresh throwaway accounts as needed; clean up at the end (the DELETE /me task
+      itself anonymizes the account so re-using emails is fine).
+  - agent: "testing"
+    message: |
+      STEP 1 backend validation COMPLETE — 16/32 PASS, 16/32 FAIL.
+      Test script: /app/backend_test_step1.py against EXPO_PUBLIC_BACKEND_URL/api.
+
+      ❌ CRITICAL BLOCKER (single root cause for 15/16 failures):
+        backend/server.py imports `from routes.moderation import router as moderation_router`
+        (line 14) BUT never calls `api.include_router(moderation_router)`. As a result, EVERY
+        moderation endpoint returns 404 in production:
+           POST /api/segnalazioni            -> 404
+           POST /api/blocks/{user_id}        -> 404
+           DELETE /api/blocks/{user_id}      -> 404
+           GET  /api/blocks                  -> 404
+        FIX (1 line, after include of notifiche_router around line 32 of server.py):
+            api.include_router(moderation_router)
+        After this, all the moderation tests should pass on a code-read basis — the logic
+        in routes/moderation.py is correct (reason whitelist validation, idempotent
+        upsert on duplicate report returning the SAME id, self-block 400, missing user
+        404, list with profile lookup, idempotent unblock).
+
+      ✅ PASS (16):
+        • GET /api/ health
+        • DELETE /api/auth/me without token -> 401
+        • DELETE /api/auth/me with token -> 200 {ok:true, message:"Account cancellato definitivamente."}
+        • Old credentials no longer log in (401)
+        • GET /api/profile/{deleted_uid} -> 200 null (profile removed)
+        • GET /api/doni excludes deleted user's dono (ritirato flag set)
+        • Regression: POST /auth/register, /auth/login, GET /auth/me
+        • Regression: POST /uploads/image returns https://res.cloudinary.com/drmrh9h7f/... secure_url
+        • Regression: POST /doni, GET /doni
+        • Regression: POST /conversazioni/start/{other_user_id}
+        • Regression: GET /api/users/{id}/recensioni -> 200 (note: path is /users/{id}/recensioni,
+          NOT /recensioni/utente/{id} — the alt path returned 404)
+
+      ❌ FAIL (all derived from the missing router include):
+        • POST /api/segnalazioni  (without auth -> 404 instead of 401)
+        • POST /api/segnalazioni invalid reason  -> 404 instead of 400
+        • POST /api/segnalazioni valid  -> 404 instead of 200
+        • POST /api/segnalazioni idempotency  -> 404
+        • POST /api/blocks/{id} without auth, self-block, non-existent, valid, idempotent re-block  -> all 404
+        • GET  /api/blocks (list, empty for fresh user)  -> 404
+        • DELETE /api/blocks/{id} (idempotent) -> 404
+        • Block-symmetric filter on /api/doni — could not be exercised because /api/blocks is 404.
+          The filter implementation in routes/dono.py (lista_doni using blocked_ids_for)
+          is correct on code-read and ready to be re-validated once the router is wired.
+        • Sub-check inside DELETE /auth/me suite: "blocks cleanup for partner-Z" couldn't
+          be verified because the precondition (blocking X) returned 404. The auth.py
+          deletion routine itself does call db.blocks.delete_many({$or: [...]}) so the
+          cleanup logic is correct; it just couldn't be observed end-to-end.
+
+      ⚠️ Minor (not blocking):
+        • GET /api/recensioni/utente/{user_id} (path explicitly requested in the review)
+          returns 404 — the route is mounted at GET /api/users/{user_id}/recensioni
+          (in routes/recensioni.py). Either update the FE to use /users/{id}/recensioni
+          or add an alias in the router. Existing endpoint works, so it's a naming nit.
+
+      NEXT ACTION FOR MAIN AGENT:
+        Add ONE line to /app/backend/server.py (after line 32):
+            api.include_router(moderation_router)
+        Restart backend (supervisor will auto-reload). Re-run /app/backend_test_step1.py;
+        all 16 failing moderation/block-filter tests are expected to flip to PASS.

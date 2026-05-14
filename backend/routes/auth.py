@@ -90,6 +90,53 @@ async def me(user=Depends(get_current_user)):
     return UserOut(id=user['id'], email=user['email'])
 
 
+@router.delete('/me')
+async def cancella_account(user=Depends(get_current_user)):
+    """Cancellazione definitiva dell'account (Apple Guideline 5.1.1).
+
+    Strategia: anonimizza i contenuti dell'utente per preservare la coerenza
+    della comunità (chat, recensioni date/ricevute), ma rimuove i suoi dati
+    personali (profilo, push token, password, email) in modo che l'utente
+    non sia più identificabile.
+    """
+    user_id = user['id']
+    logger.warning('🗑️  Cancellazione account user_id=%s', user_id)
+
+    # 1) Rimuovi credenziali e identità (l'utente non potrà più loggarsi)
+    deleted_email = f'deleted-{user_id[:8]}@joy.local'
+    await db.users.update_one(
+        {'id': user_id},
+        {'$set': {
+            'email': deleted_email,
+            'password_hash': '!deleted',
+            'push_token': None,
+            'deleted_at': now_utc().isoformat(),
+            'deleted': True,
+        }},
+    )
+
+    # 2) Rimuovi profilo (nome, foto, città, telefono)
+    await db.profiles.delete_one({'user_id': user_id})
+
+    # 3) "Ritira" tutti i suoi doni attivi (rimossi dalle liste pubbliche)
+    await db.doni.update_many(
+        {'user_id': user_id, 'ritirato': False},
+        {'$set': {'ritirato': True, 'rimosso_da_account_cancellato': True}},
+    )
+
+    # 4) Rimuovi le sue letture / OTP / token push
+    await db.password_resets.delete_many({'email': user.get('email', '')})
+    await db.letture.delete_many({'user_id': user_id})
+
+    # 5) Rimuovi i blocchi che riguardano l'utente
+    await db.blocks.delete_many({'$or': [{'blocker_id': user_id}, {'blocked_id': user_id}]})
+
+    # 6) Le recensioni date/ricevute vengono mantenute ma anonimizzate (autore mostrato come "Utente eliminato")
+    # Nessuna update necessaria: il frontend rileva il profilo mancante e mostra il fallback.
+
+    return {'ok': True, 'message': 'Account cancellato definitivamente.'}
+
+
 # ---------- Password reset (OTP) ----------
 @router.post('/forgot-password')
 async def forgot_password(data: ForgotIn):

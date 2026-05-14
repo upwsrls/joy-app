@@ -7,6 +7,7 @@ from core.database import db
 from core.security import get_current_user, now_utc
 from core.cloudinary_service import safe_destroy
 from core.push import send_to_users, fire_and_forget
+from routes.moderation import blocked_ids_for
 
 router = APIRouter(prefix='/doni', tags=['doni'])
 
@@ -120,7 +121,11 @@ async def crea_dono(data: DonoIn, user=Depends(get_current_user)):
 
 @router.get('', response_model=List[DonoOut])
 async def lista_doni(user=Depends(get_current_user)):
-    items = await db.doni.find({'ritirato': False}, {'_id': 0}).sort('created_at', -1).to_list(500)
+    blocked = await blocked_ids_for(user['id'])
+    query = {'ritirato': False}
+    if blocked:
+        query['user_id'] = {'$nin': list(blocked)}
+    items = await db.doni.find(query, {'_id': 0}).sort('created_at', -1).to_list(500)
     return [await _enrich(d) for d in items]
 
 

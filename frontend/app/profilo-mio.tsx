@@ -101,6 +101,49 @@ export default function MyProfileScreen() {
     ]);
   };
 
+  const onDeleteAccount = () => {
+    // Doppia conferma per evitare cancellazioni accidentali (Apple Guideline 5.1.1.v)
+    Alert.alert(
+      '\u26a0\ufe0f Cancellare l\u2019account?',
+      'Questa azione \u00e8 irreversibile.\n\nCosa verr\u00e0 cancellato:\n\u2022 Il tuo profilo (nome, foto, citt\u00e0)\n\u2022 Le tue gioie attive\n\u2022 La tua email e password\n\nCosa resta (anonimizzato):\n\u2022 Le recensioni date e ricevute\n\u2022 Le chat con altri utenti\n\nVuoi davvero procedere?',
+      [
+        { text: 'Annulla', style: 'cancel' },
+        {
+          text: 'Continua',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Ultima conferma',
+              'Sei davvero sicuro? Non potrai recuperare l\u2019account.',
+              [
+                { text: 'No, annulla', style: 'cancel' },
+                {
+                  text: 'S\u00ec, cancella definitivamente',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      setLoading(true);
+                      await api.delete('/auth/me');
+                      await signOut();
+                      router.replace('/login');
+                      setTimeout(() => {
+                        Alert.alert('Account cancellato', 'Grazie per aver usato JOY. \ud83d\udc99');
+                      }, 400);
+                    } catch (e: any) {
+                      Alert.alert('Errore', e?.response?.data?.detail || 'Riprova pi\u00f9 tardi');
+                    } finally {
+                      setLoading(false);
+                    }
+                  },
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safe} testID="my-profile-screen">
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
@@ -182,6 +225,47 @@ export default function MyProfileScreen() {
           <TouchableOpacity testID="myprofile-logout-btn" onPress={onLogout} style={styles.logoutBtn}>
             <Text style={styles.logoutText}>Esci da JOY</Text>
           </TouchableOpacity>
+
+          {/* Sezione legale + moderazione (richiesti Apple) */}
+          <View style={styles.legalSection}>
+            <TouchableOpacity
+              testID="myprofile-blocked-users"
+              style={styles.legalRow}
+              onPress={() => router.push('/utenti-bloccati')}
+            >
+              <Text style={styles.legalRowText}>{'\ud83d\udeab'}  Utenti bloccati</Text>
+              <Text style={styles.legalRowArrow}>{'\u203a'}</Text>
+            </TouchableOpacity>
+            <View style={styles.legalDivider} />
+            <TouchableOpacity
+              testID="myprofile-privacy-link"
+              style={styles.legalRow}
+              onPress={() => router.push('/legal/privacy')}
+            >
+              <Text style={styles.legalRowText}>{'\ud83d\udd12'}  Privacy Policy</Text>
+              <Text style={styles.legalRowArrow}>{'\u203a'}</Text>
+            </TouchableOpacity>
+            <View style={styles.legalDivider} />
+            <TouchableOpacity
+              testID="myprofile-terms-link"
+              style={styles.legalRow}
+              onPress={() => router.push('/legal/terms')}
+            >
+              <Text style={styles.legalRowText}>{'\ud83d\udcdc'}  Termini di Servizio</Text>
+              <Text style={styles.legalRowArrow}>{'\u203a'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            testID="myprofile-delete-account-btn"
+            onPress={onDeleteAccount}
+            style={styles.deleteBtn}
+          >
+            <Text style={styles.deleteText}>{'\ud83d\uddd1\ufe0f'}  Cancella account</Text>
+          </TouchableOpacity>
+          <Text style={styles.deleteHint}>
+            Azione irreversibile. I tuoi dati personali verranno rimossi definitivamente.
+          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -252,4 +336,41 @@ const styles = StyleSheet.create({
   primaryButtonText: { color: COLORS.white, fontSize: 16, fontWeight: '800' },
   logoutBtn: { marginTop: SPACING.l, paddingVertical: 12 },
   logoutText: { color: COLORS.error, fontWeight: '700', textAlign: 'center', fontSize: 15 },
+  legalSection: {
+    width: '100%',
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.large,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+    marginTop: SPACING.l,
+    overflow: 'hidden',
+  },
+  legalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.m,
+    paddingVertical: 14,
+  },
+  legalRowText: { fontSize: 15, color: COLORS.textDark, fontWeight: '600' },
+  legalRowArrow: { fontSize: 22, color: COLORS.textMedium },
+  legalDivider: { height: 1, backgroundColor: COLORS.cardBorder, marginHorizontal: SPACING.m },
+  deleteBtn: {
+    marginTop: SPACING.l,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: RADIUS.medium,
+    borderWidth: 1.5,
+    borderColor: COLORS.error,
+    alignSelf: 'center',
+  },
+  deleteText: { color: COLORS.error, fontWeight: '800', fontSize: 14 },
+  deleteHint: {
+    fontSize: 11,
+    color: COLORS.textMedium,
+    textAlign: 'center',
+    marginTop: SPACING.s,
+    marginBottom: SPACING.l,
+    paddingHorizontal: SPACING.m,
+  },
 });

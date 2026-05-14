@@ -24,6 +24,7 @@ export default function RegisterScreen() {
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const validateEmail = (text: string) =>
     /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(text.trim());
@@ -31,6 +32,12 @@ export default function RegisterScreen() {
   const onRegister = async () => {
     if (!email.trim() || !emailValid || !password || password.length < 6) {
       return Alert.alert('Ops..', 'Controlla email e password (minimo 6 caratteri)');
+    }
+    if (!acceptedTerms) {
+      return Alert.alert(
+        'Termini richiesti',
+        'Per creare l\u2019account devi accettare i Termini di Servizio e la Privacy Policy.',
+      );
     }
     try {
       setLoading(true);
@@ -103,15 +110,42 @@ export default function RegisterScreen() {
             </View>
 
             <TouchableOpacity
+              testID="register-accept-terms"
+              style={styles.termsRow}
+              onPress={() => setAcceptedTerms((v) => !v)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.checkbox, acceptedTerms && styles.checkboxOn]}>
+                {acceptedTerms && <Text style={styles.checkmark}>{'\u2713'}</Text>}
+              </View>
+              <Text style={styles.termsText}>
+                Accetto i{' '}
+                <Text
+                  style={styles.termsLink}
+                  onPress={() => router.push('/legal/terms')}
+                >
+                  Termini
+                </Text>
+                {' '}e la{' '}
+                <Text
+                  style={styles.termsLink}
+                  onPress={() => router.push('/legal/privacy')}
+                >
+                  Privacy Policy
+                </Text>
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               testID="register-submit-button"
-              style={styles.primaryButton}
+              style={[styles.primaryButton, !acceptedTerms && styles.primaryButtonDisabled]}
               onPress={onRegister}
-              disabled={loading}
+              disabled={loading || !acceptedTerms}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.primaryButtonText}>✨ Crea l'account ✨</Text>
+                <Text style={styles.primaryButtonText}>{'\u2728'} Crea l\'account {'\u2728'}</Text>
               )}
             </TouchableOpacity>
 
@@ -201,4 +235,32 @@ const styles = StyleSheet.create({
   linkBold: { color: COLORS.primary, fontWeight: '700' },
   eyeBtn: { position: 'absolute', right: 8, top: 18, padding: 6 },
   eyeText: { fontSize: 20 },
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: SPACING.m,
+    paddingHorizontal: 2,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+    backgroundColor: COLORS.white,
+  },
+  checkboxOn: { backgroundColor: COLORS.primary },
+  checkmark: { color: '#fff', fontSize: 14, fontWeight: '900' },
+  termsText: {
+    flex: 1,
+    fontSize: 13,
+    color: COLORS.textDark,
+    marginLeft: 10,
+    lineHeight: 19,
+  },
+  termsLink: { color: COLORS.primary, fontWeight: '800', textDecorationLine: 'underline' },
+  primaryButtonDisabled: { opacity: 0.5 },
 });

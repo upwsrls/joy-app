@@ -23,6 +23,7 @@ import {
 } from '../../lib/haptic';
 import JoyButton from '../../components/JoyButton';
 import RatingStars from '../../components/RatingStars';
+import ReportSheet from '../../components/ReportSheet';
 
 export default function DettaglioDonoScreen() {
   const params = useLocalSearchParams<{ id: string }>();
@@ -31,6 +32,34 @@ export default function DettaglioDonoScreen() {
   const [dono, setDono] = useState<Dono | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+
+  const blocca = () => {
+    if (!dono) return;
+    Alert.alert(
+      'Bloccare questo utente?',
+      `Bloccando ${dono.donatore_nome || 'questo utente'} non vedrai pi\u00f9 le sue gioie n\u00e9 i suoi messaggi. Puoi sbloccarlo dal Profilo.`,
+      [
+        { text: 'Annulla', style: 'cancel' },
+        {
+          text: 'Blocca',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.post(`/blocks/${dono.user_id}`);
+              hapticSuccess();
+              Alert.alert('Bloccato', 'Non vedrai pi\u00f9 contenuti da questo utente.', [
+                { text: 'OK', onPress: () => router.back() },
+              ]);
+            } catch (e: any) {
+              hapticError();
+              Alert.alert('Errore', e?.response?.data?.detail || 'Riprova pi\u00f9 tardi');
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const load = React.useCallback(async () => {
     try {
@@ -282,7 +311,35 @@ export default function DettaglioDonoScreen() {
             />
           </>
         )}
+
+        {/* Moderation actions: report + block (Apple compliance) */}
+        {!isMine && (
+          <View style={styles.modActions}>
+            <TouchableOpacity
+              testID="dono-report-btn"
+              style={styles.modBtn}
+              onPress={() => setReportOpen(true)}
+            >
+              <Text style={styles.modBtnText}>{'\ud83d\udea9'} Segnala</Text>
+            </TouchableOpacity>
+            <View style={styles.modSep} />
+            <TouchableOpacity
+              testID="dono-block-btn"
+              style={styles.modBtn}
+              onPress={blocca}
+            >
+              <Text style={styles.modBtnText}>{'\ud83d\udeab'} Blocca utente</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
+
+      <ReportSheet
+        visible={reportOpen}
+        onClose={() => setReportOpen(false)}
+        targetType="dono"
+        targetId={dono.id}
+      />
     </SafeAreaView>
   );
 }
@@ -358,4 +415,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  modActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: SPACING.l,
+    paddingTop: SPACING.l,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.cardBorder,
+  },
+  modBtn: { paddingHorizontal: SPACING.m, paddingVertical: 8 },
+  modBtnText: { color: COLORS.textMedium, fontWeight: '700', fontSize: 13 },
+  modSep: { width: 1, height: 16, backgroundColor: COLORS.cardBorder },
 });

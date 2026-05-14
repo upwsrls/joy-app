@@ -11,6 +11,7 @@ from routes.dono import router as dono_router
 from routes.chat import router as chat_router
 from routes.recensioni import router as recensioni_router
 from routes.notifiche import router as notifiche_router
+from routes.moderation import router as moderation_router
 
 
 app = FastAPI(title='JOY API', version='2.0.0')
