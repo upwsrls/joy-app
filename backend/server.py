@@ -30,6 +30,7 @@ api.include_router(dono_router)
 api.include_router(chat_router)
 api.include_router(recensioni_router)
 api.include_router(notifiche_router)
+api.include_router(moderation_router)
 
 app.include_router(api)
 

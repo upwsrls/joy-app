@@ -256,12 +256,8 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "STEP1: Moderation routes (segnalazioni + blocks) - router not registered"
-    - "STEP1: DELETE /api/auth/me"
-    - "STEP1: Block-symmetric filter on GET /api/doni"
-  stuck_tasks:
-    - "STEP1: Moderation routes (segnalazioni + blocks) - router not registered"
+  current_focus: []
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
@@ -557,3 +553,57 @@ agent_communication:
             api.include_router(moderation_router)
         Restart backend (supervisor will auto-reload). Re-run /app/backend_test_step1.py;
         all 16 failing moderation/block-filter tests are expected to flip to PASS.
+  - agent: "testing"
+    message: |
+      STEP 1 backend RE-RUN COMPLETE — 33/33 PASS (0 FAIL).
+      Confirmed `api.include_router(moderation_router)` is now wired at /app/backend/server.py
+      line 33. Test script: /app/backend_test_step1.py against EXPO_PUBLIC_BACKEND_URL/api.
+
+      ✅ DELETE /api/auth/me:
+         - no token -> 401
+         - with token -> 200 {ok:true, message:"Account cancellato definitivamente."}
+         - old creds login -> 401
+         - GET /profile/{deleted_uid} -> 200 null
+         - deleted user's dono removed from GET /doni
+         - partner Z's GET /blocks empty (block-cleanup confirmed end-to-end)
+
+      ✅ POST /api/segnalazioni:
+         - no auth -> 401
+         - invalid reason -> 400 with detail listing valid reasons
+           (spam, contenuto_offensivo, truffa, inappropriato, minorenne, altro)
+         - valid -> 200 returning SegnalazioneOut {id, target_type, target_id, reason,
+           status:'pending', created_at}
+         - duplicate report by same reporter on same target -> returns SAME id (idempotent),
+           status stays 'pending'
+
+      ✅ POST /api/blocks/{user_id}:
+         - no auth -> 401
+         - block self -> 400 "Non puoi bloccare te stesso"
+         - block non-existent user -> 404 "Utente non trovato"
+         - block valid -> 200 {ok:true, blocked_id}
+         - re-block (idempotent) -> 200
+
+      ✅ DELETE /api/blocks/{user_id}:
+         - 200 {ok:true, unblocked_id}
+         - idempotent when no block exists -> 200
+
+      ✅ GET /api/blocks:
+         - returns list of {user_id, nome, citta, blocked_at} with profile lookup populated
+         - fresh user -> []
+
+      ✅ Block-symmetric filter on GET /api/doni:
+         - Before block: A sees B's dono
+         - After A blocks B: A's /doni excludes B's dono AND B's /doni excludes A's dono
+           (SYMMETRIC filter confirmed)
+         - After unblock: both doni reappear for both users
+
+      ✅ Regression smoke (all 200):
+         - POST /auth/register, /auth/login, GET /auth/me
+         - POST /uploads/image returns https://res.cloudinary.com/drmrh9h7f/... secure_url
+         - POST /doni, GET /doni
+         - POST /conversazioni/start/{other_user_id}
+         - GET /api/users/{id}/recensioni (canonical path)
+         - GET /api/recensioni/utente/{id} returns 404 (not mounted — FE should use
+           /api/users/{id}/recensioni)
+
+      No 5xx in backend logs. All current_focus and stuck_tasks cleared.
