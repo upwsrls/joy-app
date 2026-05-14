@@ -2,23 +2,33 @@
   "expo": {
     "name": "JOY",
     "slug": "joy-app",
-    "version": "1.0.0",
+    "version": "1.1.0",
+    "description": "JOY \u00e8 la community italiana per donare e ricevere gratuitamente. Vestiti, libri, giochi, coperte: trasforma ci\u00f2 che non usi pi\u00f9 nella gioia di qualcun altro vicino a te. Mappa, chat, recensioni \u2014 senza pubblicit\u00e0, senza commissioni.",
+    "primaryColor": "#FF6B6B",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "joyapp",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "githubUrl": "https://github.com/joyapp/joy",
+    "owner": "joyapp",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.joyapp.giftapp",
+      "buildNumber": "2",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Aggiungi foto delle tue gioie da donare",
+        "NSPhotoLibraryAddUsageDescription": "Salva foto delle gioie ricevute",
         "NSCameraUsageDescription": "Scatta foto delle tue gioie da donare",
-        "NSLocationWhenInUseUsageDescription": "Trova gioie vicino a te"
+        "NSLocationWhenInUseUsageDescription": "Trova gioie vicino a te sulla mappa",
+        "NSUserTrackingUsageDescription": "Non tracciamo i tuoi dati. Questa autorizzazione non \u00e8 richiesta.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationCategoryType": "public.app-category.lifestyle"
       }
     },
     "android": {
       "package": "com.joyapp.giftapp",
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FF6B6B"
@@ -35,7 +45,12 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "JOY \u2014 Dona, ricevi gioia",
+      "shortName": "JOY",
+      "description": "Community italiana per donare e ricevere gratuitamente",
+      "themeColor": "#FF6B6B",
+      "backgroundColor": "#FFF8F0"
     },
     "plugins": [
       "expo-router",
@@ -51,13 +66,14 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Aggiungi foto delle tue gioie da donare"
+          "photosPermission": "Aggiungi foto delle tue gioie da donare",
+          "cameraPermission": "Scatta foto delle tue gioie da donare"
         }
       ],
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Trova gioie vicino a te"
+          "locationAlwaysAndWhenInUsePermission": "Trova gioie vicino a te sulla mappa"
         }
       ],
       [
@@ -70,6 +86,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
     }
   }
 }
