@@ -24,6 +24,7 @@ import {
 import JoyButton from '../../components/JoyButton';
 import RatingStars from '../../components/RatingStars';
 import ReportSheet from '../../components/ReportSheet';
+import PhotoViewer from '../../components/PhotoViewer';
 
 export default function DettaglioDonoScreen() {
   const params = useLocalSearchParams<{ id: string }>();
@@ -33,6 +34,8 @@ export default function DettaglioDonoScreen() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
 
   const blocca = () => {
     if (!dono) return;
@@ -340,6 +343,13 @@ export default function DettaglioDonoScreen() {
         targetType="dono"
         targetId={dono.id}
       />
+
+      <PhotoViewer
+        visible={viewerOpen}
+        photos={dono.foto_urls || []}
+        initialIndex={viewerIndex}
+        onClose={() => setViewerOpen(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -427,4 +437,14 @@ const styles = StyleSheet.create({
   modBtn: { paddingHorizontal: SPACING.m, paddingVertical: 8 },
   modBtnText: { color: COLORS.textMedium, fontWeight: '700', fontSize: 13 },
   modSep: { width: 1, height: 16, backgroundColor: COLORS.cardBorder },
+  zoomHint: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 999,
+  },
+  zoomHintText: { color: '#fff', fontSize: 11, fontWeight: '700' },
 });
