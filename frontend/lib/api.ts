@@ -3,8 +3,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Production backend URL hardcoded as fallback so EAS dev/preview builds work
 // even if .env is missing on the build machine (the file is gitignored).
-// You can still override via EXPO_PUBLIC_BACKEND_URL in your local .env.
-const DEFAULT_BACKEND_URL = 'https://mood-tracker-619.preview.emergentagent.com';
+// You can still override via EXPO_PUBLIC_BACKEND_URL in your local .env or
+// via the `env` block in eas.json (which is the authoritative source at build time).
+const DEFAULT_BACKEND_URL = 'https://api.joyapp.it';
 const BASE_URL =
   (process.env.EXPO_PUBLIC_BACKEND_URL && process.env.EXPO_PUBLIC_BACKEND_URL.trim()) ||
   DEFAULT_BACKEND_URL;

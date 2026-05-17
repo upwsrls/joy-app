@@ -2,7 +2,7 @@
   "expo": {
     "name": "JOY",
     "slug": "joy-app",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "JOY \u00e8 la community italiana per donare e ricevere gratuitamente. Vestiti, libri, giochi, coperte: trasforma ci\u00f2 che non usi pi\u00f9 nella gioia di qualcun altro vicino a te. Mappa, chat, recensioni \u2014 senza pubblicit\u00e0, senza commissioni.",
     "primaryColor": "#FF6B6B",
     "orientation": "portrait",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.joyapp.giftapp",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Aggiungi foto delle tue gioie da donare",
         "NSPhotoLibraryAddUsageDescription": "Salva foto delle gioie ricevute",
@@ -28,7 +28,7 @@
     },
     "android": {
       "package": "com.joyapp.giftapp",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FF6B6B"
