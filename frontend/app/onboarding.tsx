@@ -7,7 +7,7 @@ import { COLORS, SPACING, RADIUS, SHADOW } from '../lib/theme';
 
 const PAGES = [
   {
-    title: 'Benvenuto nel mondo JOY 💙',
+    title: 'Benvenuto nel mondo JOY Share 💙',
     subtitle:
       'Dona o ricevi cibo, giochi, libri, vestiti o qualsiasi altra cosa per chi ne ha bisogno...\ntutto gratis e vicino a casa!',
     emoji: '✨🎁🧸',

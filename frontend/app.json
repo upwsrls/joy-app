@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "JOY",
+    "name": "JOY Share",
     "slug": "joy-app",
     "version": "1.1.1",
-    "description": "JOY \u00e8 la community italiana per donare e ricevere gratuitamente. Vestiti, libri, giochi, coperte: trasforma ci\u00f2 che non usi pi\u00f9 nella gioia di qualcun altro vicino a te. Mappa, chat, recensioni \u2014 senza pubblicit\u00e0, senza commissioni.",
+    "description": "JOY Share \u00e8 la community italiana per donare e ricevere gratuitamente. Vestiti, libri, giochi, coperte: trasforma ci\u00f2 che non usi pi\u00f9 nella gioia di qualcun altro vicino a te. Mappa, chat, recensioni \u2014 senza pubblicit\u00e0, senza commissioni.",
     "primaryColor": "#FF6B6B",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -46,8 +46,8 @@
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png",
-      "name": "JOY \u2014 Dona, ricevi gioia",
-      "shortName": "JOY",
+      "name": "JOY Share \u2014 Dona, ricevi gioia",
+      "shortName": "JOY Share",
       "description": "Community italiana per donare e ricevere gratuitamente",
       "themeColor": "#FF6B6B",
       "backgroundColor": "#FFF8F0"

@@ -88,7 +88,7 @@ export default function MyProfileScreen() {
   };
 
   const onLogout = () => {
-    Alert.alert('Esci', 'Vuoi davvero uscire da JOY?', [
+    Alert.alert('Esci', 'Vuoi davvero uscire da JOY Share?', [
       { text: 'Annulla', style: 'cancel' },
       {
         text: 'Esci',
@@ -127,7 +127,7 @@ export default function MyProfileScreen() {
                       await signOut();
                       router.replace('/login');
                       setTimeout(() => {
-                        Alert.alert('Account cancellato', 'Grazie per aver usato JOY. \ud83d\udc99');
+                        Alert.alert('Account cancellato', 'Grazie per aver usato JOY Share. \ud83d\udc99');
                       }, 400);
                     } catch (e: any) {
                       Alert.alert('Errore', e?.response?.data?.detail || 'Riprova pi\u00f9 tardi');
@@ -223,7 +223,7 @@ export default function MyProfileScreen() {
           </View>
 
           <TouchableOpacity testID="myprofile-logout-btn" onPress={onLogout} style={styles.logoutBtn}>
-            <Text style={styles.logoutText}>Esci da JOY</Text>
+            <Text style={styles.logoutText}>Esci da JOY Share</Text>
           </TouchableOpacity>
 
           {/* Sezione legale + moderazione (richiesti Apple) */}

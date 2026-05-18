@@ -90,7 +90,7 @@ export default function ForgotPasswordScreen() {
         new_password: newPwd,
       });
       await AsyncStorage.setItem(TOKEN_KEY, res.data.access_token);
-      Alert.alert('🎉 Password aggiornata!', 'Sei già dentro JOY.');
+      Alert.alert('🎉 Password aggiornata!', 'Sei già dentro JOY Share.');
       router.replace('/');
     } catch (e: any) {
       Alert.alert('Errore', e?.response?.data?.detail || 'Impossibile aggiornare la password');
