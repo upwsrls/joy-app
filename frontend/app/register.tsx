@@ -145,7 +145,7 @@ export default function RegisterScreen() {
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.primaryButtonText}>{'\u2728'} Crea l\'account {'\u2728'}</Text>
+                <Text style={styles.primaryButtonText}>{'\u2728 Crea l\'account \u2728'}</Text>
               )}
             </TouchableOpacity>
 
