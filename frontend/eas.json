@@ -11,7 +11,7 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://api.joyapp.it"
+        "EXPO_PUBLIC_BACKEND_URL": "https://api.joyshare.it"
       }
     },
     "preview": {
@@ -20,13 +20,13 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://api.joyapp.it"
+        "EXPO_PUBLIC_BACKEND_URL": "https://api.joyshare.it"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://api.joyapp.it"
+        "EXPO_PUBLIC_BACKEND_URL": "https://api.joyshare.it"
       }
     }
   },

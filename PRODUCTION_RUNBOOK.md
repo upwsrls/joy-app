@@ -9,7 +9,7 @@ Guida step-by-step per portare JOY su TestFlight e poi App Store.\nOgni step ha 
 | Cosa serve | Costo | Tempo |
 |---|---|---|
 | Account Apple Developer | $99/anno | Registrazione 1-3 giorni |
-| Dominio joyapp.it | (gi\u00e0 tuo \u2713) | \u2014 |
+| Dominio joyshare.it | (gi\u00e0 tuo \u2713) | \u2014 |
 | Backend hosting permanente | gratis-€15/mese | 30-60 min setup |
 | MongoDB Atlas (DB cloud) | gratis (M0 512MB) | 15 min setup |
 
@@ -17,7 +17,7 @@ Guida step-by-step per portare JOY su TestFlight e poi App Store.\nOgni step ha 
 
 ## STEP A \u2014 BACKEND DI PRODUZIONE PERMANENTE
 
-Il backend attuale gira sull\u2019URL preview di Emergent (`mood-tracker-619.preview.emergentagent.com`) che \u00e8 temporaneo.\nDevi spostarlo su un host stabile + collegare il sottodominio `api.joyapp.it`.
+Il backend attuale gira sull\u2019URL preview di Emergent (`mood-tracker-619.preview.emergentagent.com`) che \u00e8 temporaneo.\nDevi spostarlo su un host stabile + collegare il sottodominio `api.joyshare.it`.
 
 ### A.1 \u2014 Setup MongoDB Atlas (DB cloud gratis)
 
@@ -49,19 +49,19 @@ Nell\u2019interfaccia Emergent, click su **Deploy** \u2192 segue il wizard.\nDop
 ```bash
 # 1. Vai su railway.app, login con GitHub\n# 2. New Project \u2192 Deploy from GitHub repo \u2192 seleziona joy repo\n# 3. Settings:\nRoot Directory:  backend\nStart Command:   uvicorn server:app --host 0.0.0.0 --port $PORT\n\n# 4. Variables (uguali a Render)\n# 5. Settings \u2192 Networking \u2192 Generate Domain \u2192 ottieni un URL temporaneo\n```
 
-### A.3 \u2014 Collega api.joyapp.it al backend
+### A.3 \u2014 Collega api.joyshare.it al backend
 
-1. Vai dal tuo registrar (chi gestisce joyapp.it) \u2192 DNS settings
+1. Vai dal tuo registrar (chi gestisce joyshare.it) \u2192 DNS settings
 2. Aggiungi record:
    - **Render**: tipo `CNAME`, nome `api`, valore `<your-app>.onrender.com`
    - **Railway**: tipo `CNAME`, nome `api`, valore `<your-app>.up.railway.app`
    - **Emergent**: dipende dal piano, fornisce istruzioni
-3. Nel pannello del provider scelto, aggiungi il dominio custom `api.joyapp.it`
+3. Nel pannello del provider scelto, aggiungi il dominio custom `api.joyshare.it`
 4. Aspetta certificato SSL (Let\u2019s Encrypt, automatico, 1-5 min)
 5. **Verifica**:
-   ```bash\n   curl https://api.joyapp.it/api/\n   # Risposta attesa: {\"message\":\"JOY API ready\",\"version\":\"2.0.0\"}\n   ```
+   ```bash\n   curl https://api.joyshare.it/api/\n   # Risposta attesa: {\"message\":\"JOY API ready\",\"version\":\"2.0.0\"}\n   ```
 
-\u2705 **Done quando**: `curl https://api.joyapp.it/api/` ritorna 200.
+\u2705 **Done quando**: `curl https://api.joyshare.it/api/` ritorna 200.
 
 ---
 
@@ -111,14 +111,14 @@ Hai gi\u00e0 i testi in `app/frontend/app/legal/privacy.tsx` e `terms.tsx`. Devi
 2. Copia il contenuto da `legal/privacy.tsx` (i blocchi `<Text>` come paragrafi)
 3. Share \u2192 Publish to web \u2192 copia URL (es. `joy-app.notion.site/privacy-XXXX`)
 4. Ripeti per Termini
-5. Configura redirect dal tuo dominio:\n   - DNS joyapp.it \u2192 aggiungi record CNAME `privacy` \u2192 `joy-app.notion.site`\n   - Oppure pi\u00f9 semplice: usa direttamente i URL Notion negli store
+5. Configura redirect dal tuo dominio:\n   - DNS joyshare.it \u2192 aggiungi record CNAME `privacy` \u2192 `joy-app.notion.site`\n   - Oppure pi\u00f9 semplice: usa direttamente i URL Notion negli store
 
-### Opzione professionale: GitHub Pages (30 min, gratis, joyapp.it/privacy)
+### Opzione professionale: GitHub Pages (30 min, gratis, joyshare.it/privacy)
 
 ```bash
-# 1. Crea repo GitHub: joyapp-web\n# 2. Aggiungi 2 file: privacy.html, terms.html (con HTML semplice dei testi)\n# 3. Settings \u2192 Pages \u2192 Deploy from branch main\n# 4. Custom domain: joyapp.it (aggiungi record CNAME)\n# URL finali: https://joyapp.it/privacy.html\n```
+# 1. Crea repo GitHub: joyshare-web\n# 2. Aggiungi 2 file: privacy.html, terms.html (con HTML semplice dei testi)\n# 3. Settings \u2192 Pages \u2192 Deploy from branch main\n# 4. Custom domain: joyshare.it (aggiungi record CNAME)\n# URL finali: https://joyshare.it/privacy.html\n```
 
-\u2705 **Done quando**: `curl -I https://joyapp.it/privacy` (o l\u2019URL scelto) ritorna 200.
+\u2705 **Done quando**: `curl -I https://joyshare.it/privacy` (o l\u2019URL scelto) ritorna 200.
 
 ---
 
@@ -161,7 +161,7 @@ Oppure manualmente: scarica il .ipa, apri **Transporter** (Mac App Store), drag&
 Vai su [appstoreconnect.apple.com](https://appstoreconnect.apple.com) \u2192 JOY \u2192 sezione **iOS App 1.1.0**:
 
 1. **App Information**:
-   - Privacy Policy URL: `https://joyapp.it/privacy`
+   - Privacy Policy URL: `https://joyshare.it/privacy`
    - Category: Lifestyle (primaria) + Social Networking (secondaria)
 
 2. **Pricing and Availability**:
@@ -175,13 +175,13 @@ Vai su [appstoreconnect.apple.com](https://appstoreconnect.apple.com) \u2192 JOY
 4. **iOS App 1.1.0**:
    - Promotional Text, Description, Keywords \u2192 copia da `STORE_LISTING.md`
    - Screenshots: carica i 5 PNG da `frontend/store-assets/ios/`
-   - Support URL: `https://joyapp.it/support` (o pagina Notion)
-   - Marketing URL: `https://joyapp.it`
+   - Support URL: `https://joyshare.it/support` (o pagina Notion)
+   - Marketing URL: `https://joyshare.it`
    - Copyright: \u00a9 2026 JOY App
 
 5. **App Review Information**:
    - Sign-in info: \u2705 (anche se l\u2019app richiede login)
-     - Username: `test@joyapp.it`
+     - Username: `test@joyshare.it`
      - Password: `Test2026!`
      - Crea questo account beta nel DB di produzione
    - Notes: \u201cApp per donazioni gratuite tra utenti. Per testare, login con le credenziali sopra. Le gioie pubblicate sono mock per la review.\u201d

@@ -40,8 +40,8 @@ export default function PrivacyScreen() {
 • Accedere ai tuoi dati (dal Profilo)
 • Modificare i tuoi dati (dal Profilo)
 • Cancellare il tuo account (dal Profilo → Cancella account) — operazione definitiva
-• Esportare i tuoi dati (scrivici a hello@joyapp.it)
-• Opporti al trattamento (scrivici a hello@joyapp.it)</Text>
+• Esportare i tuoi dati (scrivici a hello@joyshare.it)
+• Opporti al trattamento (scrivici a hello@joyshare.it)</Text>
 
         <Text style={s.h2}>6. Conservazione dati</Text>
         <Text style={s.p}>Conserviamo i tuoi dati per tutto il tempo in cui l'account è attivo. Alla cancellazione dell'account, profilo e dati personali vengono rimossi immediatamente; le tue gioie attive vengono rimosse; recensioni date/ricevute vengono mantenute in forma anonima per preservare la coerenza della community.</Text>
@@ -56,7 +56,7 @@ export default function PrivacyScreen() {
         <Text style={s.p}>Eventuali modifiche a questa Privacy verranno notificate via email e in-app.</Text>
 
         <Text style={s.h2}>10. Contatti</Text>
-        <Text style={s.p}>Per qualsiasi richiesta sulla privacy: hello@joyapp.it</Text>
+        <Text style={s.p}>Per qualsiasi richiesta sulla privacy: hello@joyshare.it</Text>
 
         <View style={{ height: SPACING.xl }} />
       </ScrollView>

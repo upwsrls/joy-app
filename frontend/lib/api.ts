@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // even if .env is missing on the build machine (the file is gitignored).
 // You can still override via EXPO_PUBLIC_BACKEND_URL in your local .env or
 // via the `env` block in eas.json (which is the authoritative source at build time).
-const DEFAULT_BACKEND_URL = 'https://api.joyapp.it';
+const DEFAULT_BACKEND_URL = 'https://api.joyshare.it';
 const BASE_URL =
   (process.env.EXPO_PUBLIC_BACKEND_URL && process.env.EXPO_PUBLIC_BACKEND_URL.trim()) ||
   DEFAULT_BACKEND_URL;
