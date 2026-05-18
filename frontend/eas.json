@@ -12,7 +12,8 @@
       },
       "env": {
         "EXPO_PUBLIC_BACKEND_URL": "https://api.joyshare.it"
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
@@ -21,13 +22,15 @@
       },
       "env": {
         "EXPO_PUBLIC_BACKEND_URL": "https://api.joyshare.it"
-      }
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_BACKEND_URL": "https://api.joyshare.it"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {
