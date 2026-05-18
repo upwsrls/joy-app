@@ -1,6 +1,6 @@
 # 🎯 STORE LISTING — App Store + Google Play
 
-Versione corrente: **1.1.0** (buildNumber iOS: 2, versionCode Android: 2)
+Versione corrente: **1.1.2** (buildNumber iOS: 4, versionCode Android: 4)
 
 ---
 

@@ -2,8 +2,8 @@
   "expo": {
     "name": "JOY Share",
     "slug": "joy-app",
-    "version": "1.1.1",
-    "description": "JOY Share \u00e8 la community italiana per donare e ricevere gratuitamente. Vestiti, libri, giochi, coperte: trasforma ci\u00f2 che non usi pi\u00f9 nella gioia di qualcun altro vicino a te. Mappa, chat, recensioni \u2014 senza pubblicit\u00e0, senza commissioni.",
+    "version": "1.1.2",
+    "description": "JOY Share è la community italiana per donare e ricevere gratuitamente. Vestiti, libri, giochi, coperte: trasforma ciò che non usi più nella gioia di qualcun altro vicino a te. Mappa, chat, recensioni — senza pubblicità, senza commissioni.",
     "primaryColor": "#FF6B6B",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.joyapp.giftapp",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Aggiungi foto delle tue gioie da donare",
         "NSPhotoLibraryAddUsageDescription": "Salva foto delle gioie ricevute",
@@ -23,12 +23,38 @@
         "NSLocationWhenInUseUsageDescription": "Trova gioie vicino a te sulla mappa",
         "NSUserTrackingUsageDescription": "Non tracciamo i tuoi dati. Questa autorizzazione non \u00e8 richiesta.",
         "ITSAppUsesNonExemptEncryption": false,
-        "LSApplicationCategoryType": "public.app-category.lifestyle"
+        "LSApplicationCategoryType": "public.app-category.lifestyle",
+        "CFBundleDisplayName": "JOY Share",
+        "CFBundleLocalizations": ["it", "en"],
+        "CFBundleDevelopmentRegion": "it"
+      },
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyCollectedDataTypes": [],
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": ["E174.1"]
+          }
+        ]
       }
     },
     "android": {
       "package": "com.joyapp.giftapp",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FF6B6B"
