@@ -16,7 +16,7 @@ export default function PrivacyScreen() {
         <Text style={s.meta}>Ultimo aggiornamento: maggio 2026</Text>
 
         <Text style={s.h2}>1. Chi siamo</Text>
-        <Text style={s.p}>JOY è un'applicazione mobile gratuita che permette agli utenti di donare e ricevere oggetti tra vicini, all'interno di una community basata su recensioni.</Text>
+        <Text style={s.p}>JOY Share è un'applicazione mobile gratuita che permette agli utenti di donare e ricevere oggetti tra vicini, all'interno di una community basata su recensioni.</Text>
 
         <Text style={s.h2}>2. Dati che raccogliamo</Text>
         <Text style={s.p}>• Email e password (cifrata) per la creazione dell'account.
@@ -28,7 +28,7 @@ export default function PrivacyScreen() {
 • Token push notifications (anonimo) per inviarti notifiche.</Text>
 
         <Text style={s.h2}>3. Come usiamo i dati</Text>
-        <Text style={s.p}>Usiamo i tuoi dati esclusivamente per far funzionare JOY: mostrare gioie nelle vicinanze, far comunicare donatori e riceventi, inviare notifiche pertinenti. Non vendiamo né condividiamo i tuoi dati con terze parti per scopi commerciali.</Text>
+        <Text style={s.p}>Usiamo i tuoi dati esclusivamente per far funzionare JOY Share: mostrare gioie nelle vicinanze, far comunicare donatori e riceventi, inviare notifiche pertinenti. Non vendiamo né condividiamo i tuoi dati con terze parti per scopi commerciali.</Text>
 
         <Text style={s.h2}>4. Servizi terzi</Text>
         <Text style={s.p}>• Cloudinary (USA, GDPR-compliant) — hosting delle foto caricate.
@@ -50,7 +50,7 @@ export default function PrivacyScreen() {
         <Text style={s.p}>Le password sono memorizzate con hashing bcrypt. La comunicazione client-server avviene via HTTPS. I dati MongoDB sono in cloud protetto.</Text>
 
         <Text style={s.h2}>8. Età minima</Text>
-        <Text style={s.p}>JOY è destinata a utenti di 14 anni o più. Se sei minorenne, è richiesto il consenso di un genitore.</Text>
+        <Text style={s.p}>JOY Share è destinata a utenti di 14 anni o più. Se sei minorenne, è richiesto il consenso di un genitore.</Text>
 
         <Text style={s.h2}>9. Modifiche</Text>
         <Text style={s.p}>Eventuali modifiche a questa Privacy verranno notificate via email e in-app.</Text>

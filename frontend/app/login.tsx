@@ -132,7 +132,7 @@ export default function LoginScreen() {
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.primaryButtonText}>Entra nel mondo JOY</Text>
+                <Text style={styles.primaryButtonText}>Entra nel mondo JOY Share</Text>
               )}
             </TouchableOpacity>
 

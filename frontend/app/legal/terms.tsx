@@ -16,13 +16,13 @@ export default function TermsScreen() {
         <Text style={s.meta}>Ultimo aggiornamento: maggio 2026</Text>
 
         <Text style={s.h2}>1. Accettazione</Text>
-        <Text style={s.p}>Creando un account su JOY accetti integralmente questi Termini e la nostra Privacy Policy.</Text>
+        <Text style={s.p}>Creando un account su JOY Share accetti integralmente questi Termini e la nostra Privacy Policy.</Text>
 
-        <Text style={s.h2}>2. Cos'è JOY</Text>
-        <Text style={s.p}>JOY è una piattaforma gratuita che facilita la donazione di oggetti tra utenti privati. Non siamo parte degli scambi: agiamo come semplice intermediario tecnico.</Text>
+        <Text style={s.h2}>2. Cos'è JOY Share</Text>
+        <Text style={s.p}>JOY Share è una piattaforma gratuita che facilita la donazione di oggetti tra utenti privati. Non siamo parte degli scambi: agiamo come semplice intermediario tecnico.</Text>
 
         <Text style={s.h2}>3. Regole della community</Text>
-        <Text style={s.p}>Pubblicando contenuti su JOY ti impegni a:
+        <Text style={s.p}>Pubblicando contenuti su JOY Share ti impegni a:
 • Pubblicare solo gioie tue e in buone condizioni
 • Non chiedere né accettare denaro per i passaggi
 • Non pubblicare contenuti illegali, offensivi, discriminatori, sessualmente espliciti, violenti o che violino diritti altrui
@@ -36,10 +36,10 @@ export default function TermsScreen() {
         <Text style={s.p}>Puoi segnalare contenuti o utenti inappropriati direttamente dall'app. Esaminiamo ogni segnalazione entro 24 ore.</Text>
 
         <Text style={s.h2}>6. Responsabilità degli utenti</Text>
-        <Text style={s.p}>Ogni utente è personalmente responsabile dei contenuti pubblicati e delle interazioni con gli altri utenti. JOY non garantisce la qualità, sicurezza, legalità o accuratezza degli oggetti donati, né l'affidabilità degli utenti.</Text>
+        <Text style={s.p}>Ogni utente è personalmente responsabile dei contenuti pubblicati e delle interazioni con gli altri utenti. JOY Share non garantisce la qualità, sicurezza, legalità o accuratezza degli oggetti donati, né l'affidabilità degli utenti.</Text>
 
         <Text style={s.h2}>7. Limitazione di responsabilità</Text>
-        <Text style={s.p}>JOY è fornito "così com'è". Non siamo responsabili per danni diretti o indiretti derivanti dall'uso dell'app, da incontri tra utenti, o da malfunzionamenti del servizio.</Text>
+        <Text style={s.p}>JOY Share è fornito "così com'è". Non siamo responsabili per danni diretti o indiretti derivanti dall'uso dell'app, da incontri tra utenti, o da malfunzionamenti del servizio.</Text>
 
         <Text style={s.h2}>8. Cancellazione account</Text>
         <Text style={s.p}>Puoi cancellare il tuo account in qualsiasi momento dal Profilo → Cancella account. La cancellazione è immediata e definitiva.</Text>

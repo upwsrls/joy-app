@@ -25,7 +25,7 @@ export default function Index() {
     <View style={styles.container} testID="splash-screen">
       <Text style={styles.logo}>✨ JOY ✨</Text>
       <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 16 }} />
-      <Text style={styles.subtitle}>Caricamento del mondo JOY...</Text>
+      <Text style={styles.subtitle}>Caricamento del mondo JOY Share...</Text>
     </View>
   );
 }
