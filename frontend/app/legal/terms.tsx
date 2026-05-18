@@ -51,7 +51,7 @@ export default function TermsScreen() {
         <Text style={s.p}>Questi Termini sono regolati dalla legge italiana. Foro competente: Milano.</Text>
 
         <Text style={s.h2}>11. Contatti</Text>
-        <Text style={s.p}>hello@joyapp.it</Text>
+        <Text style={s.p}>hello@joyshare.it</Text>
 
         <View style={{ height: SPACING.xl }} />
       </ScrollView>

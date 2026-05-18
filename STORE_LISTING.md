@@ -59,9 +59,9 @@ Seleziona fino a 3 foto direttamente dalla galleria, scegli una categoria, scriv
 
 JOY è 100% gratuita, senza pubblicità e senza commissioni. La gioia non si compra: si condivide.
 
-Hai feedback? Scrivici a hello@joyapp.it
-Privacy: https://joyapp.it/privacy
-Termini: https://joyapp.it/terms
+Hai feedback? Scrivici a hello@joyshare.it
+Privacy: https://joyshare.it/privacy
+Termini: https://joyshare.it/terms
 ```
 
 ### Keywords (max 100 char, separate da virgola, NO spazi)
@@ -72,19 +72,19 @@ dono,regalo,gratis,community,riuso,baratto,vestiti,giochi,libri,bambini,famiglia
 
 ### URL di supporto
 ```
-https://joyapp.it/support
+https://joyshare.it/support
 ```
 *(o crea un Google Form: forms.gle/xxxxx)*
 
 ### URL marketing
 ```
-https://joyapp.it
+https://joyshare.it
 ```
 *(landing page — anche un semplice Notion pubblico va bene per iniziare)*
 
 ### URL Privacy Policy
 ```
-https://joyapp.it/privacy
+https://joyshare.it/privacy
 ```
 *(deve essere accessibile pubblicamente, vedi sotto sezione "Hosting Privacy")*
 
@@ -157,13 +157,13 @@ Sono stati generati 5 mockup 1290×2796 in `frontend/store-assets/ios/`:
 1. Apri [Notion.so](https://notion.so), crea pagina "JOY Privacy Policy"
 2. Copia il testo da `app/legal/privacy.tsx`
 3. Click "Share" → "Publish to web"
-4. Usa l'URL Notion (es. `joyapp.notion.site/privacy`)
+4. Usa l'URL Notion (es. `joyshare.notion.site/privacy`)
 
 ### Opzione 2: GitHub Pages (GRATIS, 10 min)
-1. Crea repo `joyapp-legal` su GitHub
+1. Crea repo `joyshare-legal` su GitHub
 2. Aggiungi `privacy.html` e `terms.html`
 3. Settings → Pages → Deploy from branch main
-4. URL: `joyapp.github.io/joyapp-legal/privacy.html`
+4. URL: `joyshare.github.io/joyshare-legal/privacy.html`
 
 ### Opzione 3: iubenda (€27/anno, PROFESSIONALE)
 1. Vai su [iubenda.com](https://iubenda.com)
