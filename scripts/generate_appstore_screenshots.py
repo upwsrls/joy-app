@@ -46,17 +46,22 @@ SCREENS = [
         'subtitle': 'Tutto quello che non usi più\npuò diventare la gioia di qualcuno',
     },
     {
-        'slug': '03-dona',
+        'slug': '03-dettaglio',
+        'title': 'Foto a schermo intero\ncon zoom e swipe',
+        'subtitle': 'Vedi ogni dettaglio\nprima di contattare il donatore',
+    },
+    {
+        'slug': '04-dona',
         'title': 'Pubblica una gioia\nin 30 secondi',
         'subtitle': 'Fino a 3 foto, una categoria\ne due righe — fatto',
     },
     {
-        'slug': '04-chat',
+        'slug': '05-chat',
         'title': 'Chatta direttamente\ncon chi dona',
         'subtitle': 'Notifiche push istantanee\ne badge non lette',
     },
     {
-        'slug': '05-recensioni',
+        'slug': '06-recensioni',
         'title': 'Comunità affidabile\nbasata su recensioni',
         'subtitle': 'Sistema a 5 stelle:\nscegli con chi scambiare',
     },
